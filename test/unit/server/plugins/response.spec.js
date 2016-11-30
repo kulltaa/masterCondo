@@ -91,45 +91,17 @@ describe('Response', () => {
     });
   });
 
-  it('in development, reply serverError should return response and status code 500', (done) => {
-    const expectedResponse = {
-      data: []
-    };
-
+  it('reply serverError should return response and status code 500', (done) => {
     server.route({
       method: 'GET',
       path: '/',
       handler(request, reply) {
-        return reply.serverError(expectedResponse);
+        return reply.serverError({});
       }
     });
 
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(500);
-      expect(res.result).to.deep.equal(expectedResponse);
-
-      done();
-    });
-  });
-
-  it('in production, reply serverError should return empty response and status code 500', (done) => {
-    process.env.NODE_ENV = 'production';
-
-    const expectedResponse = {
-      data: []
-    };
-
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler(request, reply) {
-        return reply.serverError(expectedResponse);
-      }
-    });
-
-    server.inject('/', (res) => {
-      expect(res.statusCode).to.equal(500);
-      expect(res.result).to.not.deep.equal(expectedResponse);
 
       done();
     });

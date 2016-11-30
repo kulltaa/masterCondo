@@ -3,8 +3,8 @@ module.exports = {
   /**
    * Create new user
    *
-   * @param {Hapi.Request} request
-   * @param {Hapi.Reply} reply
+   * @param {Object} request
+   * @param {Object} reply
    * @return {Promise}
    */
   create(request, reply) {

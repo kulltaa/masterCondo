@@ -5,7 +5,7 @@ module.exports = {
   /**
    * Validation schema for creating user
    *
-   * @return {Joi.Object}
+   * @return {Object}
    */
   create() {
     return Joi

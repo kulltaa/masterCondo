@@ -14,9 +14,7 @@ module.exports = [
 
         failAction(request, reply, source, error) {
           if (error.isBoom) {
-            const message = error.output.payload.message;
-
-            return reply.badRequest({ message });
+            return reply.badRequest(error);
           }
 
           return reply.continue();

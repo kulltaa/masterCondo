@@ -1,5 +1,3 @@
-const utils = require('../../helpers/utils');
-
 module.exports = {
   method: 'serverError',
 
@@ -12,14 +10,13 @@ module.exports = {
   handler(data = {}) {
     this.request.server.log('error', 'Sending 500 response', data);
 
-    let res;
+    let message = 'Internal Server Error';
 
-    if (utils.env() === 'production') {
-      res = this.response({});
-    } else {
-      res = this.response({ error: data });
+    if (data.name === 'SequelizeValidationError') {
+      message = data.errors[0].message;
     }
 
+    const res = this.response({ error: { message } });
     res.statusCode = 500;
 
     return res;

@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt-nodejs');
+const bcrypt = require('bcryptjs');
 
 module.exports = function createUserModel(sequelize, DataTypes) {
   const User = sequelize.define(
@@ -12,11 +12,37 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       },
       email: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+          isUnique(email, next) {
+            User.find({ where: { email } })
+              .then((result) => {
+                if (result) {
+                  return next(new Error('Email already in use'));
+                }
+
+                return next();
+              })
+              .catch(error => next(error));
+          }
+        }
       },
       username: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+          isUnique(username, next) {
+            User.find({ where: { username } })
+              .then((result) => {
+                if (result) {
+                  return next(new Error('Username already in use'));
+                }
+
+                return next();
+              })
+              .catch(error => next(error));
+          }
+        }
       },
       password: {
         type: DataTypes.STRING,
@@ -58,6 +84,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return bcrypt.compareSync(password, hash);
         },
 
+        /**
+         * Create new user
+         *
+         * @param {String} email
+         * @param {String} username
+         * @param {String} password
+         * @return {Promise}
+         */
         createNewUser({ email, username, password }) {
           const passwordHash = this.hash(password);
 

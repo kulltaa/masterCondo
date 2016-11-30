@@ -4,12 +4,18 @@ module.exports = {
   /**
    * Method handler for bad request response
    *
-   * @return {Hapi.Response}
+   * @return {Object}
    */
   handler(data = {}) {
     this.request.server.log('info', 'Sending 400 response', data);
 
-    const res = this.response({ error: data });
+    let message = 'Bad Request';
+
+    if (data.isBoom) {
+      message = data.output.payload.message;
+    }
+
+    const res = this.response({ error: { message } });
     res.statusCode = 400;
 
     return res;
