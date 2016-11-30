@@ -16,7 +16,7 @@ const sequelize = new Sequelize(MYSQL_DBNAME, MYSQL_USERNAME, MYSQL_PASSWORD, {
   dialect: 'mysql',
   engine: MYSQL_ENGINE,
   charset: MYSQL_CHARSET,
-  logging: utils.env() !== 'production'
+  logging: false, //utils.env() !== 'production'
 });
 
 module.exports = {

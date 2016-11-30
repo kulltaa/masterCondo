@@ -1,5 +1,5 @@
-const Joi = require('joi');
 const UserController = require('../controllers/User');
+const validators = require('../validators');
 
 module.exports = [
   {
@@ -10,25 +10,18 @@ module.exports = [
       description: 'Create new user',
       tags: ['api'],
       validate: {
-        payload: {
-          email: Joi.string().email(),
-          username: Joi.string().min(3).required(),
-          password: Joi.string().min(8).required()
+        payload: validators.user.create(),
+
+        failAction(request, reply, source, error) {
+          if (error.isBoom) {
+            const message = error.output.payload.message;
+
+            return reply.badRequest({ message });
+          }
+
+          return reply.continue();
         }
       }
     }
-  },
-  {
-    method: 'POST',
-    path: '/users/login',
-    handler: UserController.login
-  },
-  {
-    method: 'GET',
-    path: '/users',
-    handler: UserController.all,
-    // config: {
-    //   auth: 'auth-access-token'
-    // }
   }
 ];

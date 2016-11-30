@@ -24,12 +24,12 @@ describe('Mailer', () => {
     server.connection();
 
     server.register(mailerPlugin, done);
-  })
+  });
 
   afterEach((done) => {
     stub.restore();
     server.stop(done);
-  })
+  });
 
   it('should register mailer plugin success', (done) => {
     expect(server.methods.services.mailer.send).to.be.an.instanceof(Function);

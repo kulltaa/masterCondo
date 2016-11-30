@@ -9,7 +9,7 @@ module.exports = {
   handler(data = {}) {
     this.request.server.log('info', 'Sending 400 response', data);
 
-    const res = this.response();
+    const res = this.response({ error: data });
     res.statusCode = 400;
 
     return res;

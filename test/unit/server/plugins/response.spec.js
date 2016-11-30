@@ -13,13 +13,13 @@ describe('Response', () => {
     server.connection();
 
     server.register(responsePlugin, done);
-  })
+  });
 
   afterEach((done) => {
     process.env.NODE_ENV = 'development';
 
     server.stop(done);
-  })
+  });
 
   it('should register response plugin success', (done) => {
     server.ext('onRequest', (request, reply) => {

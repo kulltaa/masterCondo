@@ -17,7 +17,7 @@ module.exports = {
     if (utils.env() === 'production') {
       res = this.response({});
     } else {
-      res = this.response(data);
+      res = this.response({ error: data });
     }
 
     res.statusCode = 500;
