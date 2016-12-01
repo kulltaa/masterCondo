@@ -1,6 +1,10 @@
 /* eslint-disable */
 require('dotenv').config();
 
+// disable logging
+process.env.LOG_STDOUT = '';
+process.env.LOG_FILE = '';
+
 const Hapi = require('hapi');
 const Promise = require('bluebird');
 const sinon = require('sinon');
@@ -11,9 +15,9 @@ require('sinon-as-promised')(Promise);
 
 const expect = chai.expect;
 
-describe('User', () => {
-  let stubSendEmail;
+describe('User API', () => {
   let server;
+  let stubSendEmail;
 
   before((done) => {
     server = new Hapi.Server();
@@ -55,7 +59,7 @@ describe('User', () => {
     });
   });
 
-  it('should return error with status code 400 when email is not valid', (done) => {
+  it('should return error with status code 400 when email does not match format', (done) => {
     const payload = {
       email: 'not-valid-email'
     };
@@ -91,6 +95,27 @@ describe('User', () => {
       expect(res.statusCode).to.equal(400);
       expect(res.result).to.include.keys('error');
       expect(res.result.error.message).to.equal('"username" is not allowed to be empty');
+
+      done();
+    });
+  });
+
+  it('should return error with status code 400 when username contains spaces', (done) => {
+    const payload = {
+      email: faker.internet.email(),
+      username: 'username with spaces'
+    };
+
+    const options = {
+      method: 'POST',
+      url: '/users',
+      payload
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(400);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('"username" can only contain 0-9, a-z, A-Z, -, _');
 
       done();
     });
@@ -212,8 +237,6 @@ describe('User', () => {
   });
 
   it('shoudl return error with status code 500 when email already in use', (done) => {
-    const email = faker.internet.email();
-
     const options = {
       method: 'POST',
       url: '/users',

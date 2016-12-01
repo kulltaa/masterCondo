@@ -1,9 +1,17 @@
 const good = require('good');
 const utils = require('../helpers/utils');
 
-const options = {
-  reporters: {
-    console: [
+const LOG_STDOUT = utils.getEnv('LOG_STDOUT');
+const LOG_FILE = utils.getEnv('LOG_FILE');
+const LOG_FILE_PATH = utils.getEnv('LOG_FILE_PATH');
+
+exports.register = function registerLogging(server, options, next) {
+  const logOptions = {
+    reporters: {}
+  };
+
+  if (LOG_STDOUT === 'enable') {
+    logOptions.reporters.console = [
       {
         module: 'good-squeeze',
         name: 'Squeeze',
@@ -19,8 +27,11 @@ const options = {
         module: 'good-console'
       },
       'stdout'
-    ],
-    file: [
+    ];
+  }
+
+  if (LOG_FILE === 'enable' && LOG_FILE_PATH) {
+    logOptions.reporters.file = [
       {
         module: 'good-squeeze',
         name: 'Squeeze',
@@ -37,13 +48,29 @@ const options = {
       },
       {
         module: 'good-file',
-        args: [utils.getEnv('LOG_PATH')]
+        args: [LOG_FILE_PATH]
       }
-    ]
+    ];
   }
+
+  if (!Object.keys(logOptions.reporters).length) {
+    return next();
+  }
+
+  return server.register({
+    register: good,
+    options: logOptions
+  }, (error) => {
+    if (error) {
+      return next(error);
+    }
+
+    return next();
+  });
 };
 
-module.exports = {
-  register: good,
-  options
+exports.register.attributes = {
+  name: 'logging',
+  version: '0.0.1',
+  multiple: false
 };

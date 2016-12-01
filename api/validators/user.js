@@ -22,12 +22,23 @@ module.exports = {
       })
       .keys({
         email: Joi.string().email().required(),
-        username: Joi.string().required(),
+        username: Joi.string().regex(/^[\w-_.]+$/, 'username').required()
+          .options({
+            language: {
+              string: {
+                regex: {
+                  name: 'can only contain 0-9, a-z, A-Z, -, _'
+                }
+              }
+            }
+          }),
         password: Joi.string().min(8).required(),
         password_confirmation: Joi.any().valid(Joi.ref('password')).required()
           .options({
             language: {
-              any: { allowOnly: 'must match password' }
+              any: {
+                allowOnly: 'must match password'
+              }
             }
           })
       });
