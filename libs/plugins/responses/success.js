@@ -5,10 +5,10 @@ module.exports = {
    * Method handler for success response
    *
    * @param {Object} data
-   * @return Hapi.Response
+   * @return {Object}
    */
   handler(data = {}) {
-    this.request.server.log('trace', 'Sending 200 response', data);
+    this.request.log('trace', 'Sending 200 response', data);
 
     const res = this.response(data);
     res.statusCode = 200;

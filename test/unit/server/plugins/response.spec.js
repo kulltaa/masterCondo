@@ -102,6 +102,7 @@ describe('Response', () => {
 
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(500);
+      expect(res.result).to.include.keys('error');
 
       done();
     });

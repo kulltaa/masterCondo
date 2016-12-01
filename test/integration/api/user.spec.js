@@ -2,9 +2,12 @@
 require('dotenv').config();
 
 const Hapi = require('hapi');
+const Promise = require('bluebird');
+const sinon = require('sinon');
 const chai = require('chai');
 const faker = require('faker');
 const plugins = require('../../../libs/plugins');
+require('sinon-as-promised')(Promise);
 
 const expect = chai.expect;
 
@@ -173,7 +176,7 @@ describe('User', () => {
     });
   });
 
-  it('should create new user success when data is valid', (done) => {
+  it.only('should create new user success when data is valid', (done) => {
     const options = {
       method: 'POST',
       url: '/users',
@@ -185,9 +188,19 @@ describe('User', () => {
       }
     };
 
+    const stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+    stubSendEmail.resolves();
+
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(200);
       expect(res.result.id).to.not.undefined;
+      sinon.assert.calledWith(stubSendEmail, {
+        to: options.payload.email,
+        subject: 'test subject',
+        html: 'test html email content'
+      });
+
+      stubSendEmail.restore();
 
       done();
     });

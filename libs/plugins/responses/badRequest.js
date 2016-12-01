@@ -4,10 +4,11 @@ module.exports = {
   /**
    * Method handler for bad request response
    *
+   * @param {object} data
    * @return {Object}
    */
   handler(data = {}) {
-    this.request.server.log('info', 'Sending 400 response', data);
+    this.request.log('info', 'Sending 400 response', data);
 
     let message = 'Bad Request';
 

@@ -5,10 +5,10 @@ module.exports = {
    * Method handler for server error response
    *
    * @param {Object} data
-   * @return {Hapi.Response}
+   * @return {Object}
    */
   handler(data = {}) {
-    this.request.server.log('error', 'Sending 500 response', data);
+    this.request.log('error', 'Sending 500 response', data);
 
     let message = 'Internal Server Error';
 

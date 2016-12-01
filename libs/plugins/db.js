@@ -5,7 +5,7 @@ const Promise = require('bluebird');
 /**
  * Register db plugin by file
  *
- * @param {Hapi.Server} server
+ * @param {Object} server
  * @param {String} file
  * @return {Promise}
  */

@@ -1,32 +1,28 @@
 const Promise = require('bluebird');
 const nodemailer = require('nodemailer');
-const smtpTransport = require('nodemailer-smtp-transport');
+const sesTransport = require('nodemailer-ses-transport');
 const utils = require('../../libs/helpers/utils');
 
-const MAILER_HOST = utils.getEnv('MAILER_HOST');
-const MAILER_PORT = utils.getEnv('MAILER_PORT');
-const MAILER_AUTH_USER = utils.getEnv('MAILER_AUTH_USER');
-const MAILER_AUTH_PASS = utils.getEnv('MAILER_AUTH_PASS');
+const MAILER_AWS_SES_ACCESS_KEY = utils.getEnv('MAILER_AWS_SES_ACCESS_KEY');
+const MAILER_AWS_SES_SECRET_KEY = utils.getEnv('MAILER_AWS_SES_SECRET_KEY');
+const MAILER_AWS_SES_REGION = utils.getEnv('MAILER_AWS_SES_REGION');
 const MAILER_FROM = utils.getEnv('MAILER_FROM');
 
-const transporter = nodemailer.createTransport(smtpTransport({
-  host: MAILER_HOST,
-  port: MAILER_PORT,
-  auth: {
-    user: MAILER_AUTH_USER,
-    pass: MAILER_AUTH_PASS
-  }
+const transporter = nodemailer.createTransport(sesTransport({
+  accessKeyId: MAILER_AWS_SES_ACCESS_KEY,
+  secretAccessKey: MAILER_AWS_SES_SECRET_KEY,
+  region: MAILER_AWS_SES_REGION
 }));
 
 module.exports = {
 
   /**
-   * Send email
+   * Send html email
    *
-   * @param {{from: String, to: String, subject: String}}
+   * @param {{from: String, to: String, subject: String, html: String}}
    * @return {Promise}
    */
-  send({ from = MAILER_FROM, to, subject }) {
+  send({ from = MAILER_FROM, to, subject, html }) {
     if (!to) {
       return Promise.reject(new Error('To is required'));
     }
@@ -35,7 +31,7 @@ module.exports = {
       from,
       to,
       subject,
-      text: 'test mailer service'
+      html
     };
 
     return new Promise((resolve, reject) => {

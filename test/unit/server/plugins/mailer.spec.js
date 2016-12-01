@@ -37,7 +37,7 @@ describe('Mailer', () => {
     done();
   });
 
-  it('send email from request object should call send in Mailer service', (done) => {
+  it('send email from server methods should call send in Mailer service', (done) => {
     const options = {};
 
     server.ext('onRequest', (request, reply) => {

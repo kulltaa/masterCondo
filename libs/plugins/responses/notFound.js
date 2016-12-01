@@ -4,10 +4,11 @@ module.exports = {
   /**
    * Method handler for not found response
    *
-   * @return {Hapi.Response}
+   * @param {Object} data
+   * @return {Object}
    */
   handler(data = {}) {
-    this.request.server.log('trace', 'Sending 404 response', data);
+    this.request.log('trace', 'Sending 404 response', data);
 
     const res = this.response();
     res.statusCode = 404;

@@ -10,7 +10,8 @@ const options = {
         args: [
           {
             log: '*',
-            request: '*'
+            request: '*',
+            error: '*'
           }
         ]
       },
