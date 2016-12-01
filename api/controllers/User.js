@@ -7,13 +7,15 @@
  * @return {Promise}
  */
 const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, result) {
-  return request.server.methods.services.mailer.send({
+  const emailPayload = {
     to: request.payload.email,
     subject: 'test subject',
     html: 'test html email content'
-  })
-  .then(() => reply.success({ id: result.getDataValue('id') }))
-  .catch(error => Promise.reject(error));
+  };
+
+  return request.server.methods.services.mailer.send(emailPayload)
+    .then(() => reply.success({ id: result.getDataValue('id') }))
+    .catch(error => Promise.reject(error));
 };
 
 module.exports = {

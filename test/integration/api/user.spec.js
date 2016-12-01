@@ -223,14 +223,16 @@ describe('User API', () => {
       }
     };
 
+    const emailPayload = {
+      to: options.payload.email,
+      subject: 'test subject',
+      html: 'test html email content'
+    };
+
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(200);
       expect(res.result.id).to.not.undefined;
-      sinon.assert.calledWith(stubSendEmail, {
-        to: options.payload.email,
-        subject: 'test subject',
-        html: 'test html email content'
-      });
+      sinon.assert.calledWith(stubSendEmail, emailPayload);
 
       done();
     });
