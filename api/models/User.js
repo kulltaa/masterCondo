@@ -44,10 +44,9 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           }
         }
       },
-      password: {
+      password_hash: {
         type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: ''
+        allowNull: false
       },
       is_active: {
         type: DataTypes.BOOLEAN,
@@ -80,7 +79,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          * @param {String} hash
          * @return {Boolean}
          */
-        validate(password, hash) {
+        isPasswordCorrect(password, hash) {
           return bcrypt.compareSync(password, hash);
         },
 
@@ -98,8 +97,25 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return this.create({
             email,
             username,
-            password: passwordHash
+            password_hash: passwordHash
           });
+        },
+
+        /**
+         * Find password hash by email
+         *
+         * @param {String} email
+         * @return {String}
+         */
+        findPasswordHashByEmail(email) {
+          const cond = {
+            where: { email },
+            attributes: ['password_hash']
+          };
+
+          return this.find(cond)
+            .then(result => (result ? result.getDataValue('password_hash') : ''))
+            .catch(error => Promise.reject(error));
         }
       }
     }

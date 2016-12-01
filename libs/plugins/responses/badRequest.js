@@ -14,6 +14,8 @@ module.exports = {
 
     if (data.isBoom) {
       message = data.output.payload.message;
+    } else if (data.message) {
+      message = data.message;
     }
 
     const res = this.response({ error: { message } });

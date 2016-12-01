@@ -20,7 +20,7 @@ const createUserTable = function createUserTable(queryInterface, Sequelize) {
         allowNull: false,
         defaultValue: ''
       },
-      password: {
+      password_hash: {
         type: Sequelize.STRING,
         allowNull: false,
         defaultValue: ''

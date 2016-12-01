@@ -8,9 +8,17 @@ module.exports = {
    * @return {Object}
    */
   handler(data = {}) {
-    this.request.log('trace', data);
+    this.request.log('info', data);
 
-    const res = this.response();
+    let message = 'Not Found';
+
+    if (data.isBoom) {
+      message = data.output.payload.message;
+    } else if (data.message) {
+      message = data.message;
+    }
+
+    const res = this.response({ error: { message } });
     res.statusCode = 404;
 
     return res;

@@ -14,6 +14,8 @@ module.exports = {
 
     if (data.name === 'SequelizeValidationError') {
       message = data.errors[0].message;
+    } else if (data.message) {
+      message = data.message;
     }
 
     const res = this.response({ error: { message } });

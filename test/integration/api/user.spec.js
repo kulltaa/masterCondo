@@ -303,7 +303,7 @@ describe('User API', () => {
       server.stop(done);
     });
 
-    it.only('should return error with status code 400 when email is empty', (done) => {
+    it('should return error with status code 400 when email is empty', (done) => {
       const payload = {
         email: ''
       };
@@ -323,7 +323,7 @@ describe('User API', () => {
       });
     });
 
-    it.only('should return error with status code 400 when email format invalid', (done) => {
+    it('should return error with status code 400 when email format invalid', (done) => {
       const payload = {
         email: 'invalid-email'
       };
@@ -343,7 +343,7 @@ describe('User API', () => {
       });
     });
 
-    it.only('should return error with status code 400 when password is empty', (done) => {
+    it('should return error with status code 400 when password is empty', (done) => {
       const payload = {
         email: faker.internet.email(),
         password: ''
@@ -361,6 +361,105 @@ describe('User API', () => {
         expect(res.result.error.message).to.equal('Please check your email/password again');
 
         done();
+      });
+    });
+
+    it('should return error with status code 404 when email has not been registered', (done) => {
+      const createNewUserOptions = {
+        method: 'POST',
+        url: '/users',
+        payload: {
+          email: faker.internet.email(),
+          username: faker.internet.userName(),
+          password: 'random-password',
+          password_confirmation: 'random-password'
+        }
+      };
+
+      const loginOptions = {
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: faker.internet.email(),
+          password: 'random-password'
+        }
+      };
+
+      server.inject(createNewUserOptions, (res) => {
+        server.inject(loginOptions, (res) => {
+          expect(res.statusCode).to.equal(404);
+          expect(res.result).to.include.keys('error');
+          expect(res.result.error.message).to.equal('Email does not exist');
+
+          done();
+        });
+      });
+    });
+
+    it('should return error with status code 500 when password is incorrect', (done) => {
+      const payload = {
+        email: faker.internet.email(),
+        username: faker.internet.userName(),
+        password: 'random-password',
+        password_confirmation: 'random-password'
+      };
+
+      const createNewUserOptions = {
+        method: 'POST',
+        url: '/users',
+        payload
+      };
+
+      const loginOptions = {
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: payload.email,
+          password: 'wrong-password'
+        }
+      };
+
+      server.inject(createNewUserOptions, (res) => {
+        server.inject(loginOptions, (res) => {
+          expect(res.statusCode).to.equal(500);
+          expect(res.result).to.include.keys('error');
+          expect(res.result.error.message).to.equal('Please check your email/password again');
+
+          done();
+        });
+      });
+    });
+
+    it.only('should return access token when email/password correct and has already activated', (done) => {
+      const payload = {
+        email: faker.internet.email(),
+        username: faker.internet.userName(),
+        password: 'random-password',
+        password_confirmation: 'random-password'
+      };
+
+      const createNewUserOptions = {
+        method: 'POST',
+        url: '/users',
+        payload
+      };
+
+      const loginOptions = {
+        method: 'POST',
+        url: '/users/login',
+        payload: {
+          email: payload.email,
+          password: payload.password
+        }
+      };
+
+      server.inject(createNewUserOptions, (res) => {
+        server.inject(loginOptions, (res) => {
+          expect(res.statusCode).to.equal(200);
+          expect(res.result).to.include.keys('access_token');
+
+          done();
+        });
       });
     });
   });

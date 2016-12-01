@@ -43,6 +43,23 @@ module.exports = {
    * @return {Promise}
    */
   login(request, reply) {
-    return reply();
+    const UserModel = request.getDb().getModel('User');
+    const { email, password } = request.payload;
+
+    return UserModel.findPasswordHashByEmail(email)
+      .then((hash) => {
+        if (!hash) {
+          return reply.notFound(new Error('Email does not exist'));
+        }
+
+        const isPasswordCorrect = UserModel.isPasswordCorrect(password, hash);
+
+        if (!isPasswordCorrect) {
+          return reply.serverError(new Error('Please check your email/password again'));
+        }
+
+        return Promise.resolve();
+      })
+      .catch(error => reply.serverError(error));
   }
 };
