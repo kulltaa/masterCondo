@@ -12,6 +12,7 @@ require('sinon-as-promised')(Promise);
 const expect = chai.expect;
 
 describe('User', () => {
+  let stubSendEmail;
   let server;
 
   before((done) => {
@@ -23,6 +24,15 @@ describe('User', () => {
 
   after((done) => {
     server.stop(done);
+  });
+
+  beforeEach(() => {
+    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+    stubSendEmail.resolves();
+  });
+
+  afterEach(() => {
+    stubSendEmail.restore();
   });
 
   it('should return error with status code 400 when email is empty', (done) => {
@@ -176,20 +186,17 @@ describe('User', () => {
     });
   });
 
-  it.only('should create new user success when data is valid', (done) => {
+  it('should create new user success when data is valid', (done) => {
     const options = {
       method: 'POST',
       url: '/users',
       payload: {
         email: faker.internet.email(),
         username: faker.internet.userName(),
-        password: 'some-password',
-        password_confirmation: 'some-password'
+        password: 'random-password',
+        password_confirmation: 'random-password'
       }
     };
-
-    const stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
-    stubSendEmail.resolves();
 
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(200);
@@ -199,8 +206,6 @@ describe('User', () => {
         subject: 'test subject',
         html: 'test html email content'
       });
-
-      stubSendEmail.restore();
 
       done();
     });
