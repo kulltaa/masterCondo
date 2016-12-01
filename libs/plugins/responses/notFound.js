@@ -8,7 +8,7 @@ module.exports = {
    * @return {Object}
    */
   handler(data = {}) {
-    this.request.log('trace', 'Sending 404 response', data);
+    this.request.log('trace', data);
 
     const res = this.response();
     res.statusCode = 404;

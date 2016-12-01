@@ -8,7 +8,7 @@ module.exports = {
    * @return {Object}
    */
   handler(data = {}) {
-    this.request.log('info', 'Sending 400 response', data);
+    this.request.log('info', data);
 
     let message = 'Bad Request';
 

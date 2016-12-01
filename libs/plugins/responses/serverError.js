@@ -8,7 +8,7 @@ module.exports = {
    * @return {Object}
    */
   handler(data = {}) {
-    this.request.log('error', 'Sending 500 response', data);
+    this.request.log('error', data);
 
     let message = 'Internal Server Error';
 

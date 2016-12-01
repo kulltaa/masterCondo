@@ -33,5 +33,16 @@ module.exports = {
     return UserModel.createNewUser(request.payload)
       .then(result => onCreatedUserSuccess(request, reply, result))
       .catch(error => reply.serverError(error));
+  },
+
+  /**
+   * User login
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {Promise}
+   */
+  login(request, reply) {
+    return reply();
   }
 };

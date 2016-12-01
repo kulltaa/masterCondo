@@ -8,7 +8,7 @@ module.exports = {
    * @return {Object}
    */
   handler(data = {}) {
-    this.request.log('trace', 'Sending 200 response', data);
+    this.request.log('trace', data);
 
     const res = this.response(data);
     res.statusCode = 200;

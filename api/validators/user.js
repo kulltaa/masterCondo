@@ -7,7 +7,7 @@ module.exports = {
    *
    * @return {Object}
    */
-  create() {
+  createSchema() {
     return Joi
       .object()
       .options({
@@ -27,7 +27,7 @@ module.exports = {
             language: {
               string: {
                 regex: {
-                  name: 'can only contain 0-9, a-z, A-Z, -, _'
+                  name: 'can only contain 0-9, a-z, A-Z, -, _, .'
                 }
               }
             }
@@ -38,6 +38,47 @@ module.exports = {
             language: {
               any: {
                 allowOnly: 'must match password'
+              }
+            }
+          })
+      });
+  },
+
+  /**
+   * Validation schema for user login
+   *
+   * @return {Object}
+   */
+  loginSchema() {
+    return Joi
+      .object()
+      .options({
+        language: {
+          messages: {
+            wrapArrays: false
+          },
+          object: {
+            child: '!!{{reason}}'
+          }
+        }
+      })
+      .keys({
+        email: Joi.string().email().required()
+          .options({
+            language: {
+              any: {
+                empty: '!!Please check your email/password again'
+              },
+              string: {
+                email: '!!Please check your email/password again'
+              }
+            }
+          }),
+        password: Joi.string().required()
+          .options({
+            language: {
+              any: {
+                empty: '!!Please check your email/password again'
               }
             }
           })

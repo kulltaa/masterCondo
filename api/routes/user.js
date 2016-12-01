@@ -1,6 +1,23 @@
 const UserController = require('../controllers/User');
 const validators = require('../validators');
 
+/**
+ * Action handler for failed params
+ *
+ * @param {Object} request
+ * @param {Object} reply
+ * @param {String} source
+ * @param {Object} error
+ * @return {*}
+ */
+const failAction = function failAction(request, reply, source, error) {
+  if (error.isBoom) {
+    return reply.badRequest(error);
+  }
+
+  return reply.continue();
+};
+
 module.exports = [
   {
     method: 'POST',
@@ -10,15 +27,21 @@ module.exports = [
       description: 'Create new user',
       tags: ['api'],
       validate: {
-        payload: validators.user.create(),
-
-        failAction(request, reply, source, error) {
-          if (error.isBoom) {
-            return reply.badRequest(error);
-          }
-
-          return reply.continue();
-        }
+        failAction,
+        payload: validators.user.createSchema()
+      }
+    }
+  },
+  {
+    method: 'POST',
+    path: '/users/login',
+    config: {
+      handler: UserController.login,
+      description: 'User login',
+      tags: ['api'],
+      validate: {
+        failAction,
+        payload: validators.user.loginSchema()
       }
     }
   }
