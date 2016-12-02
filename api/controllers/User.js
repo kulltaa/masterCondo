@@ -6,15 +6,25 @@
  * @param {Object} result
  * @return {Promise}
  */
-const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, result) {
+const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user) {
+  const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
+
+  const userId = user.getId();
   const emailPayload = {
     to: request.payload.email,
     subject: 'test subject',
     html: 'test html email content'
   };
 
-  return request.server.methods.services.mailer.send(emailPayload)
-    .then(() => reply.success({ id: result.getId() }))
+  const sendEmail = request.server.methods.services.mailer.send(emailPayload);
+  const createNewAccessToken = UserAccessTokenModel.createNewAccessToken(userId);
+
+  return Promise.all([sendEmail, createNewAccessToken])
+    .then((results) => {
+      const token = results[1];
+
+      return reply.success({ access_token: token.getValue() });
+    })
     .catch(error => Promise.reject(error));
 };
 
@@ -26,15 +36,15 @@ const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, resul
  * @param {Object} result
  * @return {*}
  */
-const handleLogin = function on(request, reply, result) {
-  if (!result) {
+const handleLogin = function on(request, reply, user) {
+  if (!user) {
     return reply.notFound(new Error('Email does not exist'));
   }
 
   const UserModel = request.getDb().getModel('User');
   const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
 
-  const hash = result.getPasswordHash();
+  const hash = user.getPasswordHash();
   const password = request.payload.password;
   const isPasswordCorrect = UserModel.validatePassword(password, hash);
 
@@ -42,9 +52,9 @@ const handleLogin = function on(request, reply, result) {
     return reply.unauthorized(new Error('Please check your email/password again'));
   }
 
-  const userId = result.getId();
+  const userId = user.getId();
   return UserAccessTokenModel.createNewAccessToken(userId)
-    .then(tokenResult => reply.success({ access_token: tokenResult.getAccessToken() }))
+    .then(token => reply.success({ access_token: token.getValue() }))
     .catch(error => reply.serverError(error));
 };
 
@@ -61,7 +71,7 @@ module.exports = {
     const UserModel = request.getDb().getModel('User');
 
     return UserModel.createNewUser(request.payload)
-      .then(result => onCreatedUserSuccess(request, reply, result))
+      .then(user => onCreatedUserSuccess(request, reply, user))
       .catch(error => reply.serverError(error));
   },
 
@@ -77,7 +87,20 @@ module.exports = {
     const email = request.payload.email;
 
     return UserModel.findByEmail(email)
-      .then(result => handleLogin(request, reply, result))
+      .then(user => handleLogin(request, reply, user))
       .catch(error => reply.serverError(error));
+  },
+
+  /**
+   * Get user status
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {*}
+   */
+  status(request, reply) {
+    const user = request.auth.credentials.user;
+
+    return reply({ is_active: user.getStatus() });
   }
 };

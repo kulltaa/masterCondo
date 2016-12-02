@@ -58,12 +58,32 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       tableName: 'user',
       underscored: true,
       instanceMethods: {
+
+        /**
+         * Get user id
+         *
+         * @return {String}
+         */
         getId() {
           return this.getDataValue('id');
         },
 
+        /**
+         * Get password hash
+         *
+         * @return {String}
+         */
         getPasswordHash() {
           return this.getDataValue('password_hash');
+        },
+
+        /**
+         * Get user status
+         *
+         * @return {Boolean}
+         */
+        getStatus() {
+          return this.getDataValue('is_active');
         }
       },
       classMethods: {

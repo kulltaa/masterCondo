@@ -36,7 +36,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       tableName: 'user_access_token',
       underscored: true,
       instanceMethods: {
-        getAccessToken() {
+        getValue() {
           return this.getDataValue('access_token');
         }
       },

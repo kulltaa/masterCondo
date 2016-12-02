@@ -44,5 +44,15 @@ module.exports = [
         payload: validators.user.loginSchema()
       }
     }
+  },
+  {
+    method: 'GET',
+    path: '/users/status',
+    config: {
+      auth: 'auth-access-token',
+      handler: UserController.status,
+      description: 'Get user status',
+      tags: ['api']
+    }
   }
 ];

@@ -24,7 +24,7 @@ const validateAccessToken = function validateAccessToken(token, callback) {
         return Promise.resolve();
       }
 
-      callback(null, true, result.User);
+      callback(null, true, { user: result.User });
 
       return Promise.resolve();
     })

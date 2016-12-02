@@ -231,14 +231,15 @@ describe('Create', () => {
 
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(200);
-      expect(res.result.id).to.not.undefined;
+      expect(res.result).to.include.keys('access_token');
+      expect(res.result.access_token).to.not.empty;
       sinon.assert.calledWith(stubSendEmail, emailPayload);
 
       done();
     });
   });
 
-  it('shoudl return error with status code 500 when email already in use', (done) => {
+  it('should return error with status code 500 when email already in use', (done) => {
     const options = {
       method: 'POST',
       url: '/users/register',
@@ -261,7 +262,7 @@ describe('Create', () => {
     });
   });
 
-  it('shoudl return error with status code 500 when username already in use', (done) => {
+  it('should return error with status code 500 when username already in use', (done) => {
     const options = {
       method: 'POST',
       url: '/users/register',
@@ -454,6 +455,88 @@ describe('Login', () => {
         expect(res.result.access_token).to.not.empty;
 
         done();
+      });
+    });
+  });
+});
+
+describe('Status', () => {
+  before((done) => {
+    server = new Hapi.Server();
+    server.connection();
+
+    server.register(plugins, done);
+  });
+
+  after((done) => {
+    server.stop(done);
+  });
+
+  beforeEach(() => {
+    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+    stubSendEmail.resolves();
+  });
+
+  afterEach(() => {
+    stubSendEmail.restore();
+  });
+
+  it.only('should return error with status 401 when token invalid', (done) => {
+    const options = {
+      method: 'GET',
+      url: '/users/status'
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(401);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('An access token is required to request this resource.');
+
+      done();
+    });
+  });
+
+  it('should return user status when token is valid', (done) => {
+    const payload = {
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      password: 'random-password',
+      password_confirmation: 'random-password'
+    };
+
+    const createNewUserOptions = {
+      method: 'POST',
+      url: '/users/register',
+      payload
+    };
+
+    const loginOptions = {
+      method: 'POST',
+      url: '/users/login',
+      payload: {
+        email: payload.email,
+        password: payload.password
+      }
+    };
+
+    server.inject(createNewUserOptions, (res) => {
+      server.inject(loginOptions, (res) => {
+        const token = res.result.access_token;
+
+        const options = {
+          method: 'GET',
+          url: '/users/status',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        };
+
+        server.inject(options, (res) => {
+          expect(res.statusCode).to.equal(200);
+          expect(res.result).to.include.keys('is_active');
+
+          done();
+        });
       });
     });
   });
