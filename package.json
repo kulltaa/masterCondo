@@ -2,13 +2,13 @@
   "name": "condo",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha test/**/*.spec.js",
     "lint": "./node_modules/.bin/eslint -c .eslintrc .",
     "db:migrate:up": "cd scripts && /bin/bash db_migrate.sh up",
     "db:migrate:down": "cd scripts && /bin/bash db_migrate.sh down",
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
