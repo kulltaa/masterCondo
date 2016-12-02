@@ -481,10 +481,29 @@ describe('Status', () => {
     stubSendEmail.restore();
   });
 
-  it.only('should return error with status 401 when token invalid', (done) => {
+  it('should return error with status 401 when token doesn\'t exist', (done) => {
     const options = {
       method: 'GET',
       url: '/users/status'
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(401);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('An access token is required to request this resource.');
+
+      done();
+    });
+  });
+
+  it('should return error with status 401 when token invalid', (done) => {
+    const invalidToken = 'invalid-token';
+    const options = {
+      method: 'GET',
+      url: '/users/status',
+      headers: {
+        Authorization: `Bearer ${invalidToken}`
+      }
     };
 
     server.inject(options, (res) => {

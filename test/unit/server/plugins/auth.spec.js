@@ -14,28 +14,28 @@ describe('Auth', () => {
     let server;
 
     beforeEach((done) => {
-      stub = sinon.stub(authToken.options, 'validateFunc');
+      // stub = sinon.stub(authToken.options, 'validateFunc');
 
-      const authPlugin = proxyquire('../../../../libs/plugins/auth', {
-        './auth/token': {
-          options: {
-            validateFunc: stub
-          }
-        }
-      });
+      // const authPlugin = proxyquire('../../../../libs/plugins/auth', {
+      //   './auth/token': {
+      //     options: {
+      //       validateFunc: stub
+      //     }
+      //   }
+      // });
 
       server = new Hapi.Server();
       server.connection();
 
-      server.register(authPlugin, done);
+      server.register(authToken, done);
     });
 
     afterEach((done) => {
-      stub.restore();
+      // stub.restore();
       server.stop(done);
     });
 
-    it('should return credentials when request is valid', (done) => {
+    it.only('should return credentials when request is valid', (done) => {
       const credentials = {
         username: 'some-username'
       };
