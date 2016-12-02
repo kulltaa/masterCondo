@@ -76,7 +76,7 @@ describe('Response', () => {
   });
 
   it('reply success should return response and status code 200', (done) => {
-    const expectedResponse = {
+    const expected = {
       data: []
     };
 
@@ -84,14 +84,14 @@ describe('Response', () => {
       method: 'GET',
       path: '/',
       handler(request, reply) {
-        return reply.success(expectedResponse);
+        return reply.success(expected);
       }
     });
 
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(200);
-      expect(res.result).to.deep.equal(expectedResponse);
-      sinon.assert.calledWith(spySuccess, expectedResponse);
+      expect(res.result).to.deep.equal(expected);
+      sinon.assert.calledWith(spySuccess, expected);
 
       done();
     });

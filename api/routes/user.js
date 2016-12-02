@@ -21,7 +21,7 @@ const failAction = function failAction(request, reply, source, error) {
 module.exports = [
   {
     method: 'POST',
-    path: '/users',
+    path: '/users/register',
     config: {
       handler: UserController.create,
       description: 'Create new user',

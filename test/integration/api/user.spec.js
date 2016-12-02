@@ -46,7 +46,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -66,7 +66,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -87,7 +87,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -108,7 +108,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -130,7 +130,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -152,7 +152,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -175,7 +175,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -198,7 +198,7 @@ describe('Create', () => {
 
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -214,7 +214,7 @@ describe('Create', () => {
   it('should create new user success when data is valid', (done) => {
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload: {
         email: faker.internet.email(),
         username: faker.internet.userName(),
@@ -241,7 +241,7 @@ describe('Create', () => {
   it('shoudl return error with status code 500 when email already in use', (done) => {
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload: {
         email: faker.internet.email(),
         username: faker.internet.userName(),
@@ -264,7 +264,7 @@ describe('Create', () => {
   it('shoudl return error with status code 500 when username already in use', (done) => {
     const options = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload: {
         email: faker.internet.email(),
         username: faker.internet.userName(),
@@ -400,7 +400,7 @@ describe('Login', () => {
 
     const createNewUserOptions = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
@@ -424,7 +424,7 @@ describe('Login', () => {
     });
   });
 
-  it.only('should return access token when email/password correct', (done) => {
+  it('should return access token when email/password correct', (done) => {
     const payload = {
       email: faker.internet.email(),
       username: faker.internet.userName(),
@@ -434,7 +434,7 @@ describe('Login', () => {
 
     const createNewUserOptions = {
       method: 'POST',
-      url: '/users',
+      url: '/users/register',
       payload
     };
 
