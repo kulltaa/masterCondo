@@ -1,14 +1,50 @@
 /* eslint-disable */
 const Hapi = require('hapi');
+const sinon = require('sinon');
 const chai = require('chai');
-const responsePlugin = require('../../../../libs/plugins/response');
+const proxyquire = require('proxyquire');
+const respSuccess = require('../../../../libs/plugins/responses/success');
+const respBadRequest = require('../../../../libs/plugins/responses/badRequest');
+const respUnauthorized = require('../../../../libs/plugins/responses/unauthorized');
+const respNotFound = require('../../../../libs/plugins/responses/notFound');
+const respServerError = require('../../../../libs/plugins/responses/serverError');
 
 const expect = chai.expect;
 
 describe('Response', () => {
   let server;
 
+  let spySuccess;
+  let spyBadRequest;
+  let spyUnauthorized;
+  let spyNotFound;
+  let spyServerError;
+
   beforeEach((done) => {
+    spySuccess = sinon.spy(respSuccess, 'handler');
+    spyBadRequest = sinon.spy(respBadRequest, 'handler');
+    spyUnauthorized = sinon.spy(respUnauthorized, 'handler');
+    spyNotFound = sinon.spy(respNotFound, 'handler');
+    spyServerError = sinon.spy(respServerError, 'handler');
+
+    const responsePlugin = proxyquire('../../../../libs/plugins/response', {
+      './responses/success': {
+        handler: spySuccess
+      },
+      './responses/badRequest': {
+        handler: spyBadRequest
+      },
+      './responses/unauthorized': {
+        handler: spyUnauthorized
+      },
+      './responses/notFound': {
+        handler: spyNotFound
+      },
+      './responses/serverError': {
+        handler: spyServerError
+      }
+    });
+
     server = new Hapi.Server();
     server.connection();
 
@@ -16,7 +52,11 @@ describe('Response', () => {
   });
 
   afterEach((done) => {
-    process.env.NODE_ENV = 'development';
+    spySuccess.restore();
+    spyBadRequest.restore();
+    spyUnauthorized.restore();
+    spyNotFound.restore();
+    spyServerError.restore();
 
     server.stop(done);
   });
@@ -25,6 +65,7 @@ describe('Response', () => {
     server.ext('onRequest', (request, reply) => {
       expect(reply.success).to.be.an.instanceof(Function);
       expect(reply.badRequest).to.be.an.instanceof(Function);
+      expect(reply.unauthorized).to.be.an.instanceof(Function);
       expect(reply.notFound).to.be.an.instanceof(Function);
       expect(reply.serverError).to.be.an.instanceof(Function);
 
@@ -50,59 +91,107 @@ describe('Response', () => {
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(200);
       expect(res.result).to.deep.equal(expectedResponse);
+      sinon.assert.calledWith(spySuccess, expectedResponse);
 
       done();
     });
   });
 
   it('reply badRequest should return status code 400', (done) => {
-    const expectedResponse = {
-      data: []
+    const response = new Error('Bad Request Message');
+    const expected = {
+      error: {
+        message: 'Bad Request Message'
+      }
     };
 
     server.route({
       method: 'GET',
       path: '/',
       handler(request, reply) {
-        return reply.badRequest();
+        return reply.badRequest(response);
       }
     });
 
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(400);
+      expect(res.result).to.deep.equal(expected);
+      sinon.assert.calledWith(spyBadRequest, response);
+
+      done();
+    });
+  });
+
+  it('reply unauthorized should return status code 401', (done) => {
+    const response = new Error('Unauthorized Message');
+    const expected = {
+      error: {
+        message: 'Unauthorized Message'
+      }
+    };
+
+    server.route({
+      method: 'GET',
+      path: '/',
+      handler(request, reply) {
+        return reply.unauthorized(response);
+      }
+    });
+
+    server.inject('/', (res) => {
+      expect(res.statusCode).to.equal(401);
+      expect(res.result).to.deep.equal(expected);
+      sinon.assert.calledWith(spyUnauthorized, response);
 
       done();
     });
   });
 
   it('reply notFound should return status code 404', (done) => {
+    const response = new Error('Not Found Message');
+    const expected = {
+      error: {
+        message: 'Not Found Message'
+      }
+    };
+
     server.route({
       method: 'GET',
       path: '/',
       handler(request, reply) {
-        return reply.notFound();
+        return reply.notFound(response);
       }
     });
 
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(404);
+      expect(res.result).to.deep.equal(expected);
+      sinon.assert.calledWith(spyNotFound, response);
 
       done();
     });
   });
 
   it('reply serverError should return response and status code 500', (done) => {
+    const response = new Error('Server Error Message');
+    const expected = {
+      error: {
+        message: 'Server Error Message'
+      }
+    };
+
     server.route({
       method: 'GET',
       path: '/',
       handler(request, reply) {
-        return reply.serverError({});
+        return reply.serverError(response);
       }
     });
 
     server.inject('/', (res) => {
       expect(res.statusCode).to.equal(500);
-      expect(res.result).to.include.keys('error');
+      expect(res.result).to.deep.equal(expected);
+      sinon.assert.calledWith(spyServerError, response);
 
       done();
     });

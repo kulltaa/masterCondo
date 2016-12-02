@@ -57,6 +57,15 @@ module.exports = function createUserModel(sequelize, DataTypes) {
     {
       tableName: 'user',
       underscored: true,
+      instanceMethods: {
+        getId() {
+          return this.getDataValue('id');
+        },
+
+        getPasswordHash() {
+          return this.getDataValue('password_hash');
+        }
+      },
       classMethods: {
         associate(models) {
           User.hasMany(models.UserAccessToken);
@@ -79,7 +88,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          * @param {String} hash
          * @return {Boolean}
          */
-        isPasswordCorrect(password, hash) {
+        validatePassword(password, hash) {
           return bcrypt.compareSync(password, hash);
         },
 
@@ -93,29 +102,27 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          */
         createNewUser({ email, username, password }) {
           const passwordHash = this.hash(password);
-
-          return this.create({
+          const payload = {
             email,
             username,
             password_hash: passwordHash
-          });
+          };
+
+          return this.create(payload);
         },
 
         /**
-         * Find password hash by email
+         * Find by email
          *
          * @param {String} email
          * @return {String}
          */
-        findPasswordHashByEmail(email) {
+        findByEmail(email) {
           const cond = {
-            where: { email },
-            attributes: ['password_hash']
+            where: { email }
           };
 
-          return this.find(cond)
-            .then(result => (result ? result.getDataValue('password_hash') : ''))
-            .catch(error => Promise.reject(error));
+          return this.find(cond);
         }
       }
     }

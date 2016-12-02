@@ -11,7 +11,7 @@ const validators = require('../validators');
  * @return {*}
  */
 const failAction = function failAction(request, reply, source, error) {
-  if (error.isBoom) {
+  if (error.data && error.data.name === 'ValidationError') {
     return reply.badRequest(error);
   }
 

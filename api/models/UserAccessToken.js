@@ -35,6 +35,11 @@ module.exports = function createUserModel(sequelize, DataTypes) {
     {
       tableName: 'user_access_token',
       underscored: true,
+      instanceMethods: {
+        getAccessToken() {
+          return this.getDataValue('access_token');
+        }
+      },
       classMethods: {
         associate(models) {
           UserAccessToken.belongsTo(models.User);
@@ -87,6 +92,23 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           }
 
           return this.findOne(cond);
+        },
+
+        /**
+         * Create new access token for user
+         *
+         * @param {Int} userId
+         * @return {Promise}
+         */
+        createNewAccessToken(userId) {
+          const token = this.genToken();
+          const payload = {
+            access_token: token.value,
+            access_token_expired_at: token.expired,
+            user_id: userId
+          };
+
+          return this.create(payload);
         }
       }
     }
