@@ -481,7 +481,7 @@ describe('Status', () => {
     stubSendEmail.restore();
   });
 
-  it('should return error with status 401 when token doesn\'t exist', (done) => {
+  it('should return error with status 401 when request doesn\'t contain token', (done) => {
     const options = {
       method: 'GET',
       url: '/users/status'

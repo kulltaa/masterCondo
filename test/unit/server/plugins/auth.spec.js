@@ -14,15 +14,15 @@ describe('Auth', () => {
     let server;
 
     beforeEach((done) => {
-      // stub = sinon.stub(authToken.options, 'validateFunc');
+      stub = sinon.stub(authToken.options, 'validateFunc');
 
-      // const authPlugin = proxyquire('../../../../libs/plugins/auth', {
-      //   './auth/token': {
-      //     options: {
-      //       validateFunc: stub
-      //     }
-      //   }
-      // });
+      const authPlugin = proxyquire('../../../../libs/plugins/auth', {
+        './auth/token': {
+          options: {
+            validateFunc: stub
+          }
+        }
+      });
 
       server = new Hapi.Server();
       server.connection();
@@ -31,11 +31,36 @@ describe('Auth', () => {
     });
 
     afterEach((done) => {
-      // stub.restore();
+      stub.restore();
       server.stop(done);
     });
 
-    it.only('should return credentials when request is valid', (done) => {
+    it.skip('auth-access-token strategy should exist', (done) => {
+      const token = 'some-access-token';
+      const options = {
+        method: 'GET',
+        url: '/',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler(request, reply) {
+          request.server.auth.test('auth-access-token', request, (error) => {
+            expect(error).to.be.null;
+
+            done();
+          });
+        }
+      });
+
+      server.inject(options);
+    });
+
+    it('should return credentials when token exists and is valid', (done) => {
       const credentials = {
         username: 'some-username'
       };
@@ -55,7 +80,7 @@ describe('Auth', () => {
         method: 'GET',
         path: '/',
         handler (request, reply) {
-          request.server.auth.test(authToken.name, request, (error, credentials) => {
+          request.server.auth.test('auth-access-token', request, (error, credentials) => {
             if (error) {
               return reply(error);
             }

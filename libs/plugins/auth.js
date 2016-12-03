@@ -18,8 +18,6 @@ const registerAuthByFile = function registerAuthByFile(server, file) {
         return reject(error);
       }
 
-      // server.auth.strategy(auth.name, auth.scheme, auth.options);
-
       return resolve();
     });
   });
@@ -28,7 +26,7 @@ const registerAuthByFile = function registerAuthByFile(server, file) {
 exports.register = function registerAuth(server, options, next) {
   const files = fs
     .readdirSync(path.join(__dirname, 'auth'))
-    .filter(file => file.indexOf('.') !== 0 && file !== 'token.js');
+    .filter(file => file.indexOf('.') !== 0);
 
   Promise.map(files, file => registerAuthByFile(server, file))
     .then(() => {
@@ -46,6 +44,5 @@ exports.register = function registerAuth(server, options, next) {
 exports.register.attributes = {
   name: 'auth',
   version: '0.0.1',
-  multiple: false,
-  dependencies: ['db', 'response']
+  multiple: false
 };
