@@ -13,29 +13,31 @@ const TOKEN_TYPE = 'Bearer';
  */
 const validateAccessToken = function validateAccessToken(token, callback) {
   const request = this;
-  const User = request.getDb().getModel('User');
-  const UserAccessToken = request.getDb().getModel('UserAccessToken');
+  // const User = request.getDb().getModel('User');
+  const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
 
-  UserAccessToken
-    .isAccessTokenValid(token, User)
-    .then((result) => {
-      if (!result) {
-        callback(null, false);
+  return UserAccessTokenModel.validateAccessToken(token, callback);
 
-        return Promise.resolve();
-      }
-
-      callback(null, true, { user: result.User });
-
-      return Promise.resolve();
-    })
-    .catch((error) => {
-      request.log('error', error);
-
-      callback(null, false);
-
-      return Promise.resolve();
-    });
+  // UserAccessToken
+  //   .findByAccessToken(token, { includedModels: [User] })
+  //   .then((result) => {
+  //     if (!result) {
+  //       callback(null, false);
+  //
+  //       return Promise.resolve();
+  //     }
+  //
+  //     callback(null, true, { user: result.User });
+  //
+  //     return Promise.resolve();
+  //   })
+  //   .catch((error) => {
+  //     request.log('error', error);
+  //
+  //     callback(null, false);
+  //
+  //     return Promise.resolve();
+  //   });
 };
 
 
@@ -60,15 +62,20 @@ internals.implementation = (server, options) => {
 
       const token = parts[1];
 
-      return options.validateFunc.call(request, token, (error, isValid, credentials) => {
+      return options.validateFunc.call(request, token, (error, result) => {
         if (error) {
           return reply.serverError(error);
         }
 
-        if (!isValid) {
-          return reply.unauthorized(new Error('An access token is required to request this resource.'));
+        if (result.isValid !== undefined && result.isValid === false) {
+          return reply.unauthorized(new Error('Invalid access token'));
         }
 
+        if (result.isExpired !== undefined && result.isExpired) {
+          return reply.unauthorized(new Error('Token is expired'));
+        }
+
+        const credentials = result.credentials;
         if (!credentials || typeof credentials !== 'object') {
           return reply.serverError(new Error('Bad token string received for Bearer auth validation'));
         }

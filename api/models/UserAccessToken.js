@@ -66,32 +66,68 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Validate access token
+         * Find by access token
          *
          * @param {String} token
-         * @param {Sequelize.Model[]} includedModels
          * @return {Promise}
          */
-        isAccessTokenValid(token, ...includedModels) {
+        findByToken(token) {
+          const UserModel = sequelize.model('User');
+
           const cond = {
             where: {
               access_token: token,
-              is_active: true,
-              access_token_expired_at: {
-                $gt: moment().utc().toDate()
+              // is_active: true,
+              // access_token_expired_at: {
+              //   $gt: moment().utc().toDate()
+              // }
+            },
+            include: [
+              {
+                model: UserModel,
+                required: true
               }
-            }
+            ]
           };
 
-          if (includedModels) {
-            cond.include = [];
-
-            includedModels.forEach(model => (
-              cond.include.push({ model, required: true })
-            ));
-          }
+          // if (includedModels.length) {
+          //   cond.include = [];
+          //
+          //   includedModels.forEach(model => (
+          //     cond.include.push({ model, required: true })
+          //   ));
+          // }
 
           return this.findOne(cond);
+        },
+
+        /**
+         * validateAccessToken
+         *
+         * @param {String} token
+         * @param {Function} callback
+         */
+        validateAccessToken(token, callback) {
+          return this.findByToken(token)
+            .then((result) => {
+              if (!result) {
+                return callback(null, { isValid: false });
+              }
+
+              const isActive = result.is_active;
+              if (!isActive) {
+                return callback(null, { isValid: false });
+              }
+
+              const expiredAt = result.access_token_expired_at;
+              if (moment(expiredAt).isBefore(moment())) {
+                return callback(null, { isExpired: true });
+              }
+
+              const user = result.User;
+              return callback(null, { credentials: { user } });
+            })
+            .catch(error => callback(error));
         },
 
         /**
