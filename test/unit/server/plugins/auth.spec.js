@@ -43,6 +43,27 @@ describe('Auth', () => {
       server.stop(done);
     });
 
+    it.only('should return error with status 401 when request doesn\'t contain token', (done) => {
+      server.route({
+        method: 'GET',
+        path: '/',
+        config: {
+          auth: 'auth-access-token',
+          handler(request, reply) {
+
+          }
+        }
+      });
+
+      server.inject('/', (res) => {
+        expect(res.statusCode).to.equal(401);
+        expect(res.result).to.include.keys('error');
+        expect(res.result.error.message).to.equal('An access token is required to request this resource.');
+
+        done();
+      });
+    });
+
     it('should return error with status code 401 when token is invalid', (done) => {
       const credentials = {
         username: 'some-username'

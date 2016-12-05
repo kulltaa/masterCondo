@@ -481,7 +481,7 @@ describe('Status', () => {
     stubSendEmail.restore();
   });
 
-  it('should return error with status 401 when request doesn\'t contain token', (done) => {
+  it.only('should return error with status 401 when request doesn\'t contain token', (done) => {
     const options = {
       method: 'GET',
       url: '/users/status'
@@ -496,7 +496,7 @@ describe('Status', () => {
     });
   });
 
-  it('should return error with status 401 when token invalid', (done) => {
+  it.only('should return error with status 401 when token is invalid', (done) => {
     const invalidToken = 'invalid-token';
     const options = {
       method: 'GET',
@@ -509,13 +509,13 @@ describe('Status', () => {
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(401);
       expect(res.result).to.include.keys('error');
-      expect(res.result.error.message).to.equal('An access token is required to request this resource.');
+      expect(res.result.error.message).to.equal('Invalid access token');
 
       done();
     });
   });
 
-  it('should return user status when token is valid', (done) => {
+  it.only('should return user status when token is valid', (done) => {
     const payload = {
       email: faker.internet.email(),
       username: faker.internet.userName(),
