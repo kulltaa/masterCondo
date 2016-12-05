@@ -36,8 +36,32 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       tableName: 'user_access_token',
       underscored: true,
       instanceMethods: {
+
+        /**
+         * Get token value
+         *
+         * @return {String}
+         */
         getValue() {
           return this.getDataValue('access_token');
+        },
+
+        /**
+         * Get token expired
+         *
+         * @return {Date}
+         */
+        getTokenExpiredAt() {
+          return this.getDataValue('access_token_expired_at');
+        },
+
+        /**
+         * Get access token status
+         *
+         * @return {Boolean}
+         */
+        getStatus() {
+          return this.getDataValue('is_active');
         }
       },
       classMethods: {
@@ -76,11 +100,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
 
           const cond = {
             where: {
-              access_token: token,
-              // is_active: true,
-              // access_token_expired_at: {
-              //   $gt: moment().utc().toDate()
-              // }
+              access_token: token
             },
             include: [
               {
@@ -89,14 +109,6 @@ module.exports = function createUserModel(sequelize, DataTypes) {
               }
             ]
           };
-
-          // if (includedModels.length) {
-          //   cond.include = [];
-          //
-          //   includedModels.forEach(model => (
-          //     cond.include.push({ model, required: true })
-          //   ));
-          // }
 
           return this.findOne(cond);
         },
@@ -114,12 +126,12 @@ module.exports = function createUserModel(sequelize, DataTypes) {
                 return callback(null, { isValid: false });
               }
 
-              const isActive = result.is_active;
+              const isActive = result.getStatus();
               if (!isActive) {
                 return callback(null, { isValid: false });
               }
 
-              const expiredAt = result.access_token_expired_at;
+              const expiredAt = result.getTokenExpiredAt();
               if (moment(expiredAt).isBefore(moment())) {
                 return callback(null, { isExpired: true });
               }
