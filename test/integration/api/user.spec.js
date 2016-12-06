@@ -19,24 +19,33 @@ describe('Create', () => {
   let server;
   let stubSendEmail;
 
-  before((done) => {
+  // before((done) => {
+  //   server = new Hapi.Server();
+  //   server.connection();
+  //
+  //   server.register(plugins, done);
+  // });
+  //
+  // after((done) => {
+  //   server.stop(done);
+  // });
+
+  beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
 
-    server.register(plugins, done);
+    server.register(plugins, () => {
+      stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+      stubSendEmail.resolves();
+
+      done();
+    });
   });
 
-  after((done) => {
-    server.stop(done);
-  });
-
-  beforeEach(() => {
-    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
-    stubSendEmail.resolves();
-  });
-
-  afterEach(() => {
+  afterEach((done) => {
     stubSendEmail.restore();
+
+    server.stop(done);
   });
 
   it('should return error with status code 400 when email is empty', (done) => {
@@ -223,19 +232,81 @@ describe('Create', () => {
       }
     };
 
-    const emailPayload = {
-      to: options.payload.email,
-      subject: 'test subject',
-      html: 'test html email content'
-    };
+    let UserModel;
+    let UserAccessTokenModel;
+    let UserEmailVerificationModel;
+
+    let spyCreateEmailVerificationToken;
+    let spyCreateEmailVerificationPayload;
+
+    let spyCreateAccessToken;
+
+    server.ext('onRequest', (request, reply) => {
+      UserModel = request.getDb().getModel('User');
+      UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
+      UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
+
+      spyCreateEmailVerificationToken = sinon.spy(UserEmailVerificationModel, 'createNewToken');
+      spyCreateEmailVerificationPayload = sinon.spy(UserEmailVerificationModel, 'createEmailVerificationPayload');
+
+      spyCreateAccessToken = sinon.spy(UserAccessTokenModel, 'createNewAccessToken');
+
+      reply.continue();
+    });
 
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(200);
       expect(res.result).to.include.keys('access_token');
-      expect(res.result.access_token).to.not.empty;
-      sinon.assert.calledWith(stubSendEmail, emailPayload);
 
-      done();
+      const responseToken = res.result.access_token;
+
+      UserModel.findByEmail(options.payload.email)
+        .then((user) => {
+          const userId = user.getId();
+          const email = user.getEmail();
+
+          expect(user).to.not.null;
+          expect(user.getEmail()).to.equal(options.payload.email);
+          expect(user.getUsername()).to.equal(options.payload.username);
+          expect(UserModel.validatePassword(
+            options.payload.password,
+            user.getPasswordHash()
+          )).to.equal.true;
+
+          const getAccessToken = UserAccessTokenModel.findByUserId(userId);
+          const getEmailVerificationToken = UserEmailVerificationModel.findByEmail(email);
+
+          Promise.all([getAccessToken, getEmailVerificationToken])
+            .then((results) => {
+              const accessToken = results[0];
+              expect(accessToken).to.not.null;
+              expect(accessToken.getValue()).to.equal(responseToken);
+
+              const emailVerificationToken = results[1];
+              expect(emailVerificationToken).to.not.null;
+
+              sinon.assert.calledWith(spyCreateEmailVerificationToken, email);
+              sinon.assert.calledWith(
+                spyCreateEmailVerificationPayload,
+                process.env.BASE_URL,
+                email,
+                emailVerificationToken.getValue()
+              );
+
+              const emailVerificationPayload = spyCreateEmailVerificationPayload.returnValues[0];
+              sinon.assert.calledWith(stubSendEmail, emailVerificationPayload);
+
+              sinon.assert.calledWith(spyCreateAccessToken, userId);
+
+              spyCreateEmailVerificationToken.restore();
+              spyCreateEmailVerificationPayload.restore();
+
+              spyCreateAccessToken.restore();
+
+              done();
+            })
+            .catch(error => done(error));
+        });
     });
   });
 
@@ -284,6 +355,119 @@ describe('Create', () => {
 
         done();
       });
+    });
+  });
+});
+
+describe('Verify', () => {
+  let server;
+  let stubSendEmail;
+
+  before((done) => {
+    server = new Hapi.Server();
+    server.connection();
+
+    server.register(plugins, done);
+  });
+
+  after((done) => {
+    server.stop(done);
+  });
+
+  beforeEach(() => {
+    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+    stubSendEmail.resolves();
+  });
+
+  afterEach(() => {
+    stubSendEmail.restore();
+  });
+
+  it('should return error with status 400 when verify link doesn\'t contain email', (done) => {
+    const options = {
+      method: 'GET',
+      url: '/users/verify'
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(400);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('"email" is required');
+
+      done();
+    });
+  });
+
+  it('should return error with status 400 when verify link doesn\'t contain token', (done) => {
+    const email = 'mailer@example.com';
+    const options = {
+      method: 'GET',
+      url: `/users/verify?email=${email}`
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(400);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('"token" is required');
+
+      done();
+    });
+  });
+
+  it('should return error with status 401 when email/token invalid', (done) => {
+    const invalidEmail = 'invalid@mail.com';
+    const invalidToken = 'invalid-token';
+
+    const verificationUrl = `/users/verify?email=${invalidEmail}&token=${invalidToken}`;
+
+    server.inject(verificationUrl, (res) => {
+      expect(res.statusCode).to.equal(401);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('Email/Token invalid');
+
+      done();
+    });
+  });
+
+  it('should verify user when email/token valid', (done) => {
+    const payload = {
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      password: 'random-password',
+      password_confirmation: 'random-password'
+    };
+
+    const createNewUserOptions = {
+      method: 'POST',
+      url: '/users/register',
+      payload
+    };
+
+    server.inject(createNewUserOptions, (res) => {
+      const request = res.request;
+      const UserModel = request.getDb().getModel('User');
+      const UserEmailVerificationModel = res.request.getDb().getModel('UserEmailVerification');
+
+      UserModel.findByEmail(payload.email)
+        .then((user) => {
+          const userId = user.getId();
+
+          return UserEmailVerificationModel.findByEmail(payload.email)
+        })
+        .then((token) => {
+          const verificationUrl = `/users/verify?email=${payload.email}&token=${token.getValue()}`;
+
+          server.inject(verificationUrl, (res) => {
+            expect(res.statusCode).to.equal(200);
+
+            UserModel.findByEmail(payload.email)
+              .then((user) => {
+                expect(user.getStatus()).to.equal(true);
+                done();
+              })
+              .catch(error => done(error));
+          });
+        });
     });
   });
 });
@@ -481,7 +665,7 @@ describe('Status', () => {
     stubSendEmail.restore();
   });
 
-  it.only('should return error with status 401 when request doesn\'t contain token', (done) => {
+  it('should return error with status 401 when request doesn\'t contain token', (done) => {
     const options = {
       method: 'GET',
       url: '/users/status'
@@ -496,7 +680,7 @@ describe('Status', () => {
     });
   });
 
-  it.only('should return error with status 401 when token is invalid', (done) => {
+  it('should return error with status 401 when token is invalid', (done) => {
     const invalidToken = 'invalid-token';
     const options = {
       method: 'GET',
@@ -515,7 +699,7 @@ describe('Status', () => {
     });
   });
 
-  it.only('should return user status when token is valid', (done) => {
+  it('should return user status when token is valid', (done) => {
     const payload = {
       email: faker.internet.email(),
       username: faker.internet.userName(),

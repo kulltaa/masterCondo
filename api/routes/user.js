@@ -47,6 +47,19 @@ module.exports = [
   },
   {
     method: 'GET',
+    path: '/users/verify',
+    config: {
+      handler: UserController.verify,
+      description: 'Verify email',
+      tags: ['api'],
+      validate: {
+        failAction,
+        query: validators.user.verifySchema()
+      }
+    }
+  },
+  {
+    method: 'GET',
     path: '/users/status',
     config: {
       auth: 'auth-access-token',

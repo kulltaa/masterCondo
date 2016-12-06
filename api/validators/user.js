@@ -83,5 +83,29 @@ module.exports = {
             }
           })
       });
+  },
+
+  /**
+   * Verify email
+   *
+   * @return {Object}
+   */
+  verifySchema() {
+    return Joi
+      .object()
+      .options({
+        language: {
+          messages: {
+            wrapArrays: false
+          },
+          object: {
+            child: '!!{{reason}}'
+          }
+        }
+      })
+      .keys({
+        email: Joi.string().email().required(),
+        token: Joi.string().required()
+      });
   }
 };

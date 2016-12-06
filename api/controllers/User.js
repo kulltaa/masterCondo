@@ -1,3 +1,5 @@
+const utils = require('../../libs/helpers/utils');
+
 /**
  * Handler after create new user success
  *
@@ -7,23 +9,28 @@
  * @return {Promise}
  */
 const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user) {
+  const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
   const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
 
   const userId = user.getId();
-  const emailPayload = {
-    to: request.payload.email,
-    subject: 'test subject',
-    html: 'test html email content'
-  };
+  const email = user.getEmail();
 
-  const sendEmail = request.server.methods.services.mailer.send(emailPayload);
-  const createNewAccessToken = UserAccessTokenModel.createNewAccessToken(userId);
+  return UserEmailVerificationModel.createNewToken(email)
+    .then((token) => {
+      const baseUrl = utils.getBaseUrl(request);
 
-  return Promise.all([sendEmail, createNewAccessToken])
+      const emailPayload = UserEmailVerificationModel
+        .createEmailVerificationPayload(baseUrl, email, token);
+
+      const sendEmail = request.server.methods.services.mailer.send(emailPayload);
+      const createNewAccessToken = UserAccessTokenModel.createNewAccessToken(userId);
+
+      return Promise.all([sendEmail, createNewAccessToken]);
+    })
     .then((results) => {
       const token = results[1];
 
-      return reply.success({ access_token: token.getValue() });
+      return reply.success({ access_token: token });
     })
     .catch(error => Promise.reject(error));
 };
@@ -54,7 +61,7 @@ const handleLogin = function on(request, reply, user) {
 
   const userId = user.getId();
   return UserAccessTokenModel.createNewAccessToken(userId)
-    .then(token => reply.success({ access_token: token.getValue() }))
+    .then(token => reply.success({ access_token: token }))
     .catch(error => reply.serverError(error));
 };
 
@@ -89,6 +96,45 @@ module.exports = {
     return UserModel.findByEmail(email)
       .then(user => handleLogin(request, reply, user))
       .catch(error => reply.serverError(error));
+  },
+
+  /**
+   * User login
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {Promise}
+   */
+  verify(request, reply) {
+    const { email, token } = request.query;
+
+    const UserModel = request.getDb().getModel('User');
+    const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
+
+    return UserEmailVerificationModel.validateToken(token)
+      .then((result) => {
+        const { isValid, isExpired, email: verifiedEmail } = result;
+
+        if (isValid !== undefined && isValid === false) {
+          return reply.unauthorized(new Error('Email/Token invalid'));
+        }
+
+        if (isExpired !== undefined && isExpired) {
+          return reply.unauthorized(new Error('Token expired'));
+        }
+
+        if (!verifiedEmail) {
+          return reply.unauthorized(new Error('Email doesn\'t exist'));
+        }
+
+        if (email !== verifiedEmail) {
+          return reply.unauthorized(new Error('Email/token invalid'));
+        }
+
+        return UserModel.verifyByEmail(email)
+          .then(() => reply.success());
+      })
+      .catch(error => Promise.reject(error));
   },
 
   /**

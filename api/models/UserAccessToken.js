@@ -95,6 +95,30 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          * @param {String} token
          * @return {Promise}
          */
+        findByUserId(userId) {
+          const UserModel = sequelize.model('User');
+
+          const cond = {
+            where: {
+              user_id: userId
+            },
+            include: [
+              {
+                model: UserModel,
+                required: true
+              }
+            ]
+          };
+
+          return this.findOne(cond);
+        },
+
+        /**
+         * Find by access token
+         *
+         * @param {String} token
+         * @return {Promise}
+         */
         findByToken(token) {
           const UserModel = sequelize.model('User');
 
@@ -156,7 +180,9 @@ module.exports = function createUserModel(sequelize, DataTypes) {
             user_id: userId
           };
 
-          return this.create(payload);
+          return this.create(payload)
+            .then(() => token.value)
+            .catch(error => Promise.reject(error));
         }
       }
     }

@@ -69,6 +69,24 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
+         * Get email
+         *
+         * @return {String}
+         */
+        getEmail() {
+          return this.getDataValue('email');
+        },
+
+        /**
+         * Get username
+         *
+         * @return {String}
+         */
+        getUsername() {
+          return this.getDataValue('username');
+        },
+
+        /**
          * Get password hash
          *
          * @return {String}
@@ -143,6 +161,19 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           };
 
           return this.find(cond);
+        },
+
+        /**
+         * Verify user by email
+         *
+         * @param {String} email
+         * @return {Promise}
+         */
+        verifyByEmail(email) {
+          return this.update(
+            { is_active: true },
+            { where: { email } }
+          );
         }
       }
     }
