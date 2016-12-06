@@ -363,24 +363,22 @@ describe('Verify', () => {
   let server;
   let stubSendEmail;
 
-  before((done) => {
+  beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
 
-    server.register(plugins, done);
+    server.register(plugins, () => {
+      stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+      stubSendEmail.resolves();
+
+      done();
+    });
   });
 
-  after((done) => {
-    server.stop(done);
-  });
-
-  beforeEach(() => {
-    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
-    stubSendEmail.resolves();
-  });
-
-  afterEach(() => {
+  afterEach((done) => {
     stubSendEmail.restore();
+
+    server.stop(done);
   });
 
   it('should return error with status 400 when verify link doesn\'t contain email', (done) => {
@@ -474,24 +472,22 @@ describe('Verify', () => {
 });
 
 describe('Login', () => {
-  before((done) => {
+  beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
 
-    server.register(plugins, done);
+    server.register(plugins, () => {
+      stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+      stubSendEmail.resolves();
+
+      done();
+    });
   });
 
-  after((done) => {
-    server.stop(done);
-  });
-
-  beforeEach(() => {
-    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
-    stubSendEmail.resolves();
-  });
-
-  afterEach(() => {
+  afterEach((done) => {
     stubSendEmail.restore();
+
+    server.stop(done);
   });
 
   it('should return error with status code 400 when email is empty', (done) => {
@@ -645,25 +641,43 @@ describe('Login', () => {
   });
 });
 
-describe('Status', () => {
-  before((done) => {
+describe('Forgot password', () => {
+  beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
 
-    server.register(plugins, done);
+    server.register(plugins, () => {
+      stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+      stubSendEmail.resolves();
+
+      done();
+    });
   });
 
-  after((done) => {
+  afterEach((done) => {
+    stubSendEmail.restore();
+
     server.stop(done);
   });
+});
 
-  beforeEach(() => {
-    stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
-    stubSendEmail.resolves();
+describe('Status', () => {
+  beforeEach((done) => {
+    server = new Hapi.Server();
+    server.connection();
+
+    server.register(plugins, () => {
+      stubSendEmail = sinon.stub(server.methods.services.mailer, 'send');
+      stubSendEmail.resolves();
+
+      done();
+    });
   });
 
-  afterEach(() => {
+  afterEach((done) => {
     stubSendEmail.restore();
+
+    server.stop(done);
   });
 
   it('should return error with status 401 when request doesn\'t contain token', (done) => {
