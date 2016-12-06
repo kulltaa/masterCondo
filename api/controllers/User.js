@@ -43,7 +43,7 @@ const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user)
  * @param {Object} result
  * @return {*}
  */
-const handleLogin = function on(request, reply, user) {
+const handleLogin = function handleLogin(request, reply, user) {
   if (!user) {
     return reply.notFound(new Error('Email does not exist'));
   }
@@ -63,6 +63,39 @@ const handleLogin = function on(request, reply, user) {
   return UserAccessTokenModel.createNewAccessToken(userId)
     .then(token => reply.success({ access_token: token }))
     .catch(error => reply.serverError(error));
+};
+
+/**
+ * On validate token result
+ *
+ * @param {Object} request
+ * @param {Object} reply
+ * @param {Object} result
+ * @return {*}
+ */
+const onValidateEmailToken = function onValidateEmailToken(request, reply, result) {
+  const UserModel = request.getDb().getModel('User');
+  const { isValid, isExpired, email: verifiedEmail } = result;
+
+  if (isValid !== undefined && isValid === false) {
+    return reply.unauthorized(new Error('Email/Token invalid'));
+  }
+
+  if (isExpired !== undefined && isExpired) {
+    return reply.unauthorized(new Error('Token expired'));
+  }
+
+  if (!verifiedEmail) {
+    return reply.unauthorized(new Error('Email doesn\'t exist'));
+  }
+
+  if (request.query.email !== verifiedEmail) {
+    return reply.unauthorized(new Error('Email/token invalid'));
+  }
+
+  return UserModel.verifyByEmail(verifiedEmail)
+    .then(() => reply.success({ status: 'success' }))
+    .catch(error => Promise.reject(error));
 };
 
 module.exports = {
@@ -106,35 +139,13 @@ module.exports = {
    * @return {Promise}
    */
   verify(request, reply) {
-    const { email, token } = request.query;
+    const { token } = request.query;
 
-    const UserModel = request.getDb().getModel('User');
     const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
 
     return UserEmailVerificationModel.validateToken(token)
-      .then((result) => {
-        const { isValid, isExpired, email: verifiedEmail } = result;
-
-        if (isValid !== undefined && isValid === false) {
-          return reply.unauthorized(new Error('Email/Token invalid'));
-        }
-
-        if (isExpired !== undefined && isExpired) {
-          return reply.unauthorized(new Error('Token expired'));
-        }
-
-        if (!verifiedEmail) {
-          return reply.unauthorized(new Error('Email doesn\'t exist'));
-        }
-
-        if (email !== verifiedEmail) {
-          return reply.unauthorized(new Error('Email/token invalid'));
-        }
-
-        return UserModel.verifyByEmail(email)
-          .then(() => reply.success());
-      })
-      .catch(error => Promise.reject(error));
+      .then(result => onValidateEmailToken(request, reply, result))
+      .catch(error => reply.serverError(error));
   },
 
   /**

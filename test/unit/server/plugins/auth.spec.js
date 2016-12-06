@@ -43,7 +43,7 @@ describe('Auth', () => {
       server.stop(done);
     });
 
-    it.only('should return error with status 401 when request doesn\'t contain token', (done) => {
+    it('should return error with status 401 when request doesn\'t contain token', (done) => {
       server.route({
         method: 'GET',
         path: '/',

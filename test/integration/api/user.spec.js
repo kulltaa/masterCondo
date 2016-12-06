@@ -455,7 +455,8 @@ describe('Verify', () => {
           return UserEmailVerificationModel.findByEmail(payload.email)
         })
         .then((token) => {
-          const verificationUrl = `/users/verify?email=${payload.email}&token=${token.getValue()}`;
+          const encodedEmail = encodeURIComponent(payload.email);
+          const verificationUrl = `/users/verify?email=${encodedEmail}&token=${token.getValue()}`;
 
           server.inject(verificationUrl, (res) => {
             expect(res.statusCode).to.equal(200);
