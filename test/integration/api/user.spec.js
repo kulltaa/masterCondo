@@ -69,14 +69,12 @@ describe('Create', () => {
   });
 
   it('should return error with status code 400 when email format invalid', (done) => {
-    const payload = {
-      email: 'invalid-email'
-    };
-
     const options = {
       method: 'POST',
       url: '/users/register',
-      payload
+      payload: {
+        email: 'invalid-email'
+      }
     };
 
     server.inject(options, (res) => {
@@ -511,14 +509,12 @@ describe('Login', () => {
   });
 
   it('should return error with status code 400 when email format invalid', (done) => {
-    const payload = {
-      email: 'invalid-email'
-    };
-
     const options = {
       method: 'POST',
       url: '/users/login',
-      payload
+      payload: {
+        email: 'invalid-email'
+      }
     };
 
     server.inject(options, (res) => {
@@ -641,7 +637,7 @@ describe('Login', () => {
   });
 });
 
-describe('Forgot password', () => {
+describe('Recover', () => {
   beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
@@ -658,6 +654,72 @@ describe('Forgot password', () => {
     stubSendEmail.restore();
 
     server.stop(done);
+  });
+
+  it('should return error with status code 400 when request doesn\'t contain email', (done) => {
+    const options = {
+      method: 'POST',
+      url: '/users/recover',
+      payload: {}
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(400);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('"email" is required');
+
+      done();
+    })
+  });
+
+  it('should return error with status code 400 when email empty', (done) => {
+    const options = {
+      method: 'POST',
+      url: '/users/recover',
+      payload: {
+        email: ''
+      }
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(400);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('"email" is not allowed to be empty');
+
+      done();
+    })
+  });
+
+  it('should return error with status code 400 when email format invalid', (done) => {
+    const options = {
+      method: 'POST',
+      url: '/users/recover',
+      payload: {
+        email: 'invalid-email'
+      }
+    };
+
+    server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(400);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('"email" must be a valid email');
+
+      done();
+    });
+  });
+
+  it.skip('shoud return success', (done) => {
+    const options = {
+      method: 'POST',
+      url: '/users/recover',
+      payload: {
+        email: faker.internet.email()
+      }
+    };
+
+    server.inject(options, (res) => {
+      done();
+    });
   });
 });
 

@@ -48,6 +48,15 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          */
         getTokenExpiredAt() {
           return this.getDataValue('token_expired_at');
+        },
+
+        /**
+         * Get email
+         *
+         * @return {String}
+         */
+        getEmail() {
+          return this.getDataValue('email');
         }
       },
       classMethods: {
@@ -142,7 +151,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return this.findOne(cond);
         },
 
-        validateToken(token) {
+        /**
+         * Validate email & token
+         *
+         * @param {String} token
+         * @param {String} email
+         * @return {{isValid: Boolean, isExpired: Boolean}}
+         */
+        validate(email, token) {
           return this.findByToken(token)
             .then((result) => {
               if (!result) {
@@ -154,7 +170,12 @@ module.exports = function createUserModel(sequelize, DataTypes) {
                 return { isExpired: true };
               }
 
-              return { email: result.email };
+              const verifiedEmail = result.getEmail();
+              if (email !== verifiedEmail) {
+                return { isValid: false };
+              }
+
+              return {};
             })
             .catch(error => Promise.reject(error));
         }

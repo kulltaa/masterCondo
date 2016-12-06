@@ -75,7 +75,7 @@ const handleLogin = function handleLogin(request, reply, user) {
  */
 const onValidateEmailToken = function onValidateEmailToken(request, reply, result) {
   const UserModel = request.getDb().getModel('User');
-  const { isValid, isExpired, email: verifiedEmail } = result;
+  const { isValid, isExpired } = result;
 
   if (isValid !== undefined && isValid === false) {
     return reply.unauthorized(new Error('Email/Token invalid'));
@@ -85,15 +85,7 @@ const onValidateEmailToken = function onValidateEmailToken(request, reply, resul
     return reply.unauthorized(new Error('Token expired'));
   }
 
-  if (!verifiedEmail) {
-    return reply.unauthorized(new Error('Email doesn\'t exist'));
-  }
-
-  if (request.query.email !== verifiedEmail) {
-    return reply.unauthorized(new Error('Email/token invalid'));
-  }
-
-  return UserModel.verifyByEmail(verifiedEmail)
+  return UserModel.verifyByEmail(request.query.email)
     .then(() => reply.success({ status: 'success' }))
     .catch(error => Promise.reject(error));
 };
@@ -132,20 +124,31 @@ module.exports = {
   },
 
   /**
-   * User login
+   * Verify user
    *
    * @param {Object} request
    * @param {Object} reply
    * @return {Promise}
    */
   verify(request, reply) {
-    const { token } = request.query;
+    const { email, token } = request.query;
 
     const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
 
-    return UserEmailVerificationModel.validateToken(token)
+    return UserEmailVerificationModel.validate(email, token)
       .then(result => onValidateEmailToken(request, reply, result))
       .catch(error => reply.serverError(error));
+  },
+
+  /**
+   * Recover user
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {Promise}
+   */
+  recover(request, reply) {
+    reply();
   },
 
   /**

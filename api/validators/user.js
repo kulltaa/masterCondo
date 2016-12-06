@@ -107,5 +107,28 @@ module.exports = {
         email: Joi.string().email().required(),
         token: Joi.string().required()
       });
+  },
+
+  /**
+   * Recover account schema
+   *
+   * @return {Object}
+   */
+  recoverSchema() {
+    return Joi
+      .object()
+      .options({
+        language: {
+          messages: {
+            wrapArrays: false
+          },
+          object: {
+            child: '!!{{reason}}'
+          }
+        }
+      })
+      .keys({
+        email: Joi.string().email().required()
+      });
   }
 };
