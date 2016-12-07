@@ -110,11 +110,11 @@ module.exports = {
   },
 
   /**
-   * Recover account schema
+   * Forgot schema
    *
    * @return {Object}
    */
-  recoverSchema() {
+  forgotSchema() {
     return Joi
       .object()
       .options({
@@ -129,6 +129,30 @@ module.exports = {
       })
       .keys({
         email: Joi.string().email().required()
+      });
+  },
+
+  /**
+   * Validate forgot params schema
+   *
+   * @return {Object}
+   */
+  validateForgotParamsSchema() {
+    return Joi
+      .object()
+      .options({
+        language: {
+          messages: {
+            wrapArrays: false
+          },
+          object: {
+            child: '!!{{reason}}'
+          }
+        }
+      })
+      .keys({
+        email: Joi.string().email().required(),
+        token: Joi.string().required()
       });
   }
 };

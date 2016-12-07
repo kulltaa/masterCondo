@@ -44,6 +44,15 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       instanceMethods: {
 
         /**
+         *
+         *
+         *
+         */
+        getEmail() {
+          return this.getDataValue('email');
+        },
+
+        /**
          * Get token value
          *
          * @return {String}
@@ -126,6 +135,20 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
+         * Find by email
+         *
+         * @param {String} email
+         * @return {Promise}
+         */
+        findByToken(token) {
+          const cond = {
+            where: { token }
+          };
+
+          return this.findOne(cond);
+        },
+
+        /**
          * Build verification url
          *
          * @param {String} email
@@ -158,6 +181,40 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           };
 
           return emailPayload;
+        },
+
+        /**
+         * Validate email & token
+         *
+         * @param {String} token
+         * @param {String} email
+         * @return {{isValid: Boolean, isExpired: Boolean}}
+         */
+        validate(email, token) {
+          return this.findByToken(token)
+            .then((result) => {
+              if (!result) {
+                return { isValid: false };
+              }
+
+              const status = result.getStatus();
+              if (!status) {
+                return { isValid: false };
+              }
+
+              const expiredAt = result.getTokenExpiredAt();
+              if (moment(expiredAt).isBefore(moment())) {
+                return { isExpired: true };
+              }
+
+              const verifiedEmail = result.getEmail();
+              if (email !== verifiedEmail) {
+                return { isValid: false };
+              }
+
+              return {};
+            })
+            .catch(error => Promise.reject(error));
         }
       }
     }

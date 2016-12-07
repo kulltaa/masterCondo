@@ -94,7 +94,7 @@ const onValidateEmailVerification = function onValidateEmailVerification(request
  * @param {Object} user
  * @return {*}
  */
-const onFindEmailRecovery = function onFindEmailRecovery(request, reply, user) {
+const onFindForgotEmail = function onFindEmailRecovery(request, reply, user) {
   if (!user) {
     return reply.notFound(new Error('Email has not been registered'));
   }
@@ -153,9 +153,8 @@ module.exports = {
    * @return {Promise}
    */
   verify(request, reply) {
-    const { email, token } = request.query;
-
     const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
+    const { email, token } = request.query;
 
     return UserEmailVerificationModel.validate(email, token)
       .then(result => onValidateEmailVerification(request, reply, result))
@@ -163,18 +162,46 @@ module.exports = {
   },
 
   /**
-   * Recover user
+   * Forgot account
    *
    * @param {Object} request
    * @param {Object} reply
    * @return {Promise}
    */
-  recover(request, reply) {
+  forgot(request, reply) {
     const UserModel = request.getDb().getModel('User');
     const email = request.payload.email;
 
     return UserModel.findByEmail(email)
-      .then(user => onFindEmailRecovery(request, reply, user))
+      .then(user => onFindForgotEmail(request, reply, user))
+      .catch(error => reply.serverError(error));
+  },
+
+  /**
+   * Validate forgot params
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {Promise}
+   */
+  validateForgotParams(request, reply) {
+    const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+    const { email, token } = request.query;
+
+    return UserRecoveryModel.validate(email, token)
+      .then((result) => {
+        const { isValid, isExpired } = result;
+
+        if (isValid !== undefined && isValid === false) {
+          return reply.unauthorized(new Error('Email/Token invalid'));
+        }
+
+        if (isExpired !== undefined && isExpired) {
+          return reply.unauthorized(new Error('Token expired'));
+        }
+
+        return reply.success({ status: 'success' });
+      })
       .catch(error => reply.serverError(error));
   },
 

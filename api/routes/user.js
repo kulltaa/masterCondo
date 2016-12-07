@@ -60,14 +60,27 @@ module.exports = [
   },
   {
     method: 'POST',
-    path: '/users/recover',
+    path: '/users/forgot',
     config: {
-      handler: UserController.recover,
-      description: 'Recover account',
+      handler: UserController.forgot,
+      description: 'Forgot password',
       tags: ['api'],
       validate: {
         failAction,
-        payload: validators.user.recoverSchema()
+        payload: validators.user.forgotSchema()
+      }
+    }
+  },
+  {
+    method: 'GET',
+    path: '/users/validate_forgot_params',
+    config: {
+      handler: UserController.validateForgotParams,
+      description: 'Validate forgot params',
+      tags: ['api'],
+      validate: {
+        failAction,
+        query: validators.user.validateForgotParamsSchema()
       }
     }
   },
