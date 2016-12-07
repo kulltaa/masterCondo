@@ -35,6 +35,10 @@ module.exports = {
       return baseUrl;
     }
 
+    if (!request) {
+      return '';
+    }
+
     const proto = request.headers['x-forwarded-proto'] || request.connection.info.protocol;
     const host = request.info.host;
 

@@ -49,9 +49,7 @@ describe('Auth', () => {
         path: '/',
         config: {
           auth: 'auth-access-token',
-          handler(request, reply) {
-
-          }
+          handler(request, reply) {}
         }
       });
 

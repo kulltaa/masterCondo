@@ -42,7 +42,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          *
          * @return {String}
          */
-        getValue() {
+        getToken() {
           return this.getDataValue('access_token');
         },
 

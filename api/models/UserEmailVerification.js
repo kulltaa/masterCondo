@@ -1,7 +1,14 @@
 const crypto = require('crypto');
+const _ = require('lodash');
 const moment = require('moment');
 const utils = require('../../libs/helpers/utils');
 
+const emailSubject = 'Verify Account';
+const emailTemplate = _.template(
+  'Hello\n' +
+  'Please click on the link to verify your email.\n' +
+  '<a href=<%= verificationUrl %>>Click here to verify</a>'
+);
 const EMAIL_VERIFICATION_TOKEN_LIFE_TIME = Number(utils.getEnv('EMAIL_VERIFICATION_TOKEN_LIFE_TIME'));
 
 module.exports = function createUserModel(sequelize, DataTypes) {
@@ -37,7 +44,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          *
          * @return {String}
          */
-        getValue() {
+        getToken() {
           return this.getDataValue('token');
         },
 
@@ -82,7 +89,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Create new access token for user
+         * Create new email verification token
          *
          * @param {String} email
          * @return {Promise}
@@ -101,6 +108,21 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
+         * Build verification url
+         *
+         * @param {String} email
+         * @param {String} token
+         * @return {String}
+         */
+        buildVerificationUrl(email, token) {
+          const baseUrl = utils.getBaseUrl();
+          const encodedEmail = encodeURIComponent(email);
+          const encodedToken = encodeURIComponent(token);
+
+          return `${baseUrl}/users/verify?email=${encodedEmail}&token=${encodedToken}`;
+        },
+
+        /**
          * Create email verification payload
          *
          * @param {String} baseUrl
@@ -108,16 +130,13 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          * @param {String} token
          * @return {{to: String, subject: String, html: String}}
          */
-        createEmailVerificationPayload(baseUrl, email, token) {
-          const encodedEmail = encodeURIComponent(email);
-          const verificationUrl = `${baseUrl}/user/verify/${encodedEmail}/${token}`;
+        createEmailVerificationPayload(email, token) {
+          const verificationUrl = this.buildVerificationUrl(email, token);
 
           const emailPayload = {
             to: email,
-            subject: 'Verify account',
-            html: `Hello,
-              Please click on the link to verify your email.
-              <a href=${verificationUrl}>Click here to verify</a>`
+            subject: emailSubject,
+            html: emailTemplate({ verificationUrl })
           };
 
           return emailPayload;

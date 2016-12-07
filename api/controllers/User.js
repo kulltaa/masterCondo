@@ -1,5 +1,3 @@
-const utils = require('../../libs/helpers/utils');
-
 /**
  * Handler after create new user success
  *
@@ -17,10 +15,8 @@ const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user)
 
   return UserEmailVerificationModel.createNewToken(email)
     .then((token) => {
-      const baseUrl = utils.getBaseUrl(request);
-
-      const emailPayload = UserEmailVerificationModel
-        .createEmailVerificationPayload(baseUrl, email, token);
+      // const baseUrl = utils.getBaseUrl(request);
+      const emailPayload = UserEmailVerificationModel.createEmailVerificationPayload(email, token);
 
       const sendEmail = request.server.methods.services.mailer.send(emailPayload);
       const createNewAccessToken = UserAccessTokenModel.createNewAccessToken(userId);
@@ -73,7 +69,7 @@ const handleLogin = function handleLogin(request, reply, user) {
  * @param {Object} result
  * @return {*}
  */
-const onValidateEmailToken = function onValidateEmailToken(request, reply, result) {
+const onValidateEmailVerification = function onValidateEmailVerification(request, reply, result) {
   const UserModel = request.getDb().getModel('User');
   const { isValid, isExpired } = result;
 
@@ -86,6 +82,32 @@ const onValidateEmailToken = function onValidateEmailToken(request, reply, resul
   }
 
   return UserModel.verifyByEmail(request.query.email)
+    .then(() => reply.success({ status: 'success' }))
+    .catch(error => Promise.reject(error));
+};
+
+/**
+ * Find email to recover
+ *
+ * @param {Object} request
+ * @param {Object} reply
+ * @param {Object} user
+ * @return {*}
+ */
+const onFindEmailRecovery = function onFindEmailRecovery(request, reply, user) {
+  if (!user) {
+    return reply.notFound(new Error('Email has not been registered'));
+  }
+
+  const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+  const email = user.getEmail();
+
+  return UserRecoveryModel.createNewToken(email)
+    .then((token) => {
+      const emailPayload = UserRecoveryModel.createEmailRecoveryPayload(email, token);
+
+      return request.server.methods.services.mailer.send(emailPayload);
+    })
     .then(() => reply.success({ status: 'success' }))
     .catch(error => Promise.reject(error));
 };
@@ -136,7 +158,7 @@ module.exports = {
     const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
 
     return UserEmailVerificationModel.validate(email, token)
-      .then(result => onValidateEmailToken(request, reply, result))
+      .then(result => onValidateEmailVerification(request, reply, result))
       .catch(error => reply.serverError(error));
   },
 
@@ -148,7 +170,12 @@ module.exports = {
    * @return {Promise}
    */
   recover(request, reply) {
-    reply();
+    const UserModel = request.getDb().getModel('User');
+    const email = request.payload.email;
+
+    return UserModel.findByEmail(email)
+      .then(user => onFindEmailRecovery(request, reply, user))
+      .catch(error => reply.serverError(error));
   },
 
   /**

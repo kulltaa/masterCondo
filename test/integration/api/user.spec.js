@@ -219,15 +219,17 @@ describe('Create', () => {
   });
 
   it('should create new user success when data is valid', (done) => {
+    const payload = {
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      password: 'random-password',
+      password_confirmation: 'random-password'
+    };
+
     const options = {
       method: 'POST',
       url: '/users/register',
-      payload: {
-        email: faker.internet.email(),
-        username: faker.internet.userName(),
-        password: 'random-password',
-        password_confirmation: 'random-password'
-      }
+      payload
     };
 
     let UserModel;
@@ -258,16 +260,16 @@ describe('Create', () => {
 
       const responseToken = res.result.access_token;
 
-      UserModel.findByEmail(options.payload.email)
+      UserModel.findByEmail(payload.email)
         .then((user) => {
           const userId = user.getId();
           const email = user.getEmail();
 
           expect(user).to.not.null;
-          expect(user.getEmail()).to.equal(options.payload.email);
-          expect(user.getUsername()).to.equal(options.payload.username);
+          expect(user.getEmail()).to.equal(payload.email);
+          expect(user.getUsername()).to.equal(payload.username);
           expect(UserModel.validatePassword(
-            options.payload.password,
+            payload.password,
             user.getPasswordHash()
           )).to.equal.true;
 
@@ -278,7 +280,7 @@ describe('Create', () => {
             .then((results) => {
               const accessToken = results[0];
               expect(accessToken).to.not.null;
-              expect(accessToken.getValue()).to.equal(responseToken);
+              expect(accessToken.getToken()).to.equal(responseToken);
 
               const emailVerificationToken = results[1];
               expect(emailVerificationToken).to.not.null;
@@ -286,9 +288,8 @@ describe('Create', () => {
               sinon.assert.calledWith(spyCreateEmailVerificationToken, email);
               sinon.assert.calledWith(
                 spyCreateEmailVerificationPayload,
-                process.env.BASE_URL,
                 email,
-                emailVerificationToken.getValue()
+                emailVerificationToken.getToken()
               );
 
               const emailVerificationPayload = spyCreateEmailVerificationPayload.returnValues[0];
@@ -452,7 +453,8 @@ describe('Verify', () => {
         })
         .then((token) => {
           const encodedEmail = encodeURIComponent(payload.email);
-          const verificationUrl = `/users/verify?email=${encodedEmail}&token=${token.getValue()}`;
+          const encodedToken = encodeURIComponent(token.getToken());
+          const verificationUrl = `/users/verify?email=${encodedEmail}&token=${encodedToken}`;
 
           server.inject(verificationUrl, (res) => {
             expect(res.statusCode).to.equal(200);
@@ -708,7 +710,7 @@ describe('Recover', () => {
     });
   });
 
-  it.skip('shoud return success', (done) => {
+  it('shoud return error with status 404 when email has not been registered', (done) => {
     const options = {
       method: 'POST',
       url: '/users/recover',
@@ -718,7 +720,68 @@ describe('Recover', () => {
     };
 
     server.inject(options, (res) => {
+      expect(res.statusCode).to.equal(404);
+      expect(res.result).to.include.keys('error');
+      expect(res.result.error.message).to.equal('Email has not been registered');
+
       done();
+    });
+  });
+
+  it('shoud return success when email has been registered', (done) => {
+    const payload = {
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      password: 'random-password',
+      password_confirmation: 'random-password'
+    };
+
+    const createNewUserOptions = {
+      method: 'POST',
+      url: '/users/register',
+      payload
+    };
+
+    const recoverOptions = {
+      method: 'POST',
+      url: '/users/recover',
+      payload: {
+        email: payload.email
+      }
+    };
+
+    server.inject(createNewUserOptions, (res) => {
+      const request = res.request;
+      const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+
+      const spyCreateEmailRecoveryToken = sinon.spy(UserRecoveryModel, 'createNewToken');
+      const spyCreateEmailRecoveryPayload = sinon.spy(UserRecoveryModel, 'createEmailRecoveryPayload');
+
+      server.inject(recoverOptions, (res) => {
+        expect(res.statusCode).to.equal(200);
+        expect(res.result).to.include.keys('status');
+        expect(res.result.status).to.equal('success');
+
+        sinon.assert.calledWith(spyCreateEmailRecoveryToken, payload.email);
+
+        UserRecoveryModel.findByEmail(payload.email)
+          .then((result) => {
+            expect(result).to.not.null;
+            expect(result.getStatus()).to.equal(true);
+
+            sinon.assert.calledWith(
+              spyCreateEmailRecoveryPayload,
+              payload.email,
+              result.getToken()
+            );
+
+            const emailRecoveryPayload = spyCreateEmailRecoveryPayload.returnValues[0];
+            sinon.assert.calledWith(stubSendEmail, emailRecoveryPayload);
+
+            done();
+          })
+          .catch(error => done(error));
+      });
     });
   });
 });
