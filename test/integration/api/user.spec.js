@@ -458,6 +458,8 @@ describe('Verify', () => {
 
           server.inject(verificationUrl, (res) => {
             expect(res.statusCode).to.equal(200);
+            expect(res.result).to.include.keys('status');
+            expect(res.result.status).to.equal('success');
 
             UserModel.findByEmail(payload.email)
               .then((user) => {
