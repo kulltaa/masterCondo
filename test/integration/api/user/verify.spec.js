@@ -37,26 +37,11 @@ describe('Verify', () => {
     server.stop(done);
   });
 
-  it('should return error with status 400 when verify link doesn\'t contain email', (done) => {
-    const options = {
-      method: 'GET',
-      url: '/users/verify'
-    };
-
-    server.inject(options, (res) => {
-      expect(res.statusCode).to.equal(400);
-      expect(res.result).to.include.keys('error');
-      expect(res.result.error.message).to.equal('"email" is required');
-
-      done();
-    });
-  });
-
   it('should return error with status 400 when verify link doesn\'t contain token', (done) => {
     const email = 'mailer@example.com';
     const options = {
       method: 'GET',
-      url: `/users/verify?email=${email}`
+      url: `/users/verify`
     };
 
     server.inject(options, (res) => {
@@ -68,85 +53,21 @@ describe('Verify', () => {
     });
   });
 
-  it('should return error with status 401 when both email and token invalid', (done) => {
-    const invalidEmail = 'invalid@mail.com';
+  it('should return error with status 401 when token invalid', (done) => {
     const invalidToken = 'invalid-token';
 
-    const verificationUrl = `/users/verify?email=${invalidEmail}&token=${invalidToken}`;
+    const verificationUrl = `/users/verify?token=${invalidToken}`;
 
     server.inject(verificationUrl, (res) => {
       expect(res.statusCode).to.equal(401);
       expect(res.result).to.include.keys('error');
-      expect(res.result.error.message).to.equal('Email/Token invalid');
+      expect(res.result.error.message).to.equal('Token invalid');
 
       done();
     });
   });
 
-  it('should return error with status 401 when email valid, token invalid', (done) => {
-    const payload = {
-      email: faker.internet.email(),
-      username: faker.internet.userName(),
-      password: 'random-password',
-      password_confirmation: 'random-password'
-    };
-    const invalidToken = 'invalid-token';
-
-    const createNewUserOptions = {
-      method: 'POST',
-      url: '/users/register',
-      payload
-    };
-
-    server.inject(createNewUserOptions, (res) => {
-      const verificationUrl = `/users/verify?email=${payload.email}&token=${invalidToken}`;
-
-      server.inject(verificationUrl, (res) => {
-        expect(res.statusCode).to.equal(401);
-        expect(res.result).to.include.keys('error');
-        expect(res.result.error.message).to.equal('Email/Token invalid');
-
-        done();
-      });
-    });
-  });
-
-  it('should return error with status 401 when email invalid, token valid', (done) => {
-    const payload = {
-      email: faker.internet.email(),
-      username: faker.internet.userName(),
-      password: 'random-password',
-      password_confirmation: 'random-password'
-    };
-
-    const createNewUserOptions = {
-      method: 'POST',
-      url: '/users/register',
-      payload
-    };
-
-    server.inject(createNewUserOptions, (res) => {
-      const request = res.request;
-      const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
-
-      UserEmailVerificationModel.findByEmail(payload.email)
-        .then((result) => {
-          const token = result.getToken();
-
-          const verificationUrl = `/users/verify?email=${faker.internet.email()}&token=${token}`;
-
-          server.inject(verificationUrl, (res) => {
-            expect(res.statusCode).to.equal(401);
-            expect(res.result).to.include.keys('error');
-            expect(res.result.error.message).to.equal('Email/Token invalid');
-
-            done();
-          });
-        });
-    });
-  });
-
-  it('should verify user when email/token ', (done) => {
+  it('should verify user when token valid', (done) => {
     const payload = {
       email: faker.internet.email(),
       username: faker.internet.userName(),
@@ -169,12 +90,11 @@ describe('Verify', () => {
         .then((user) => {
           const userId = user.getId();
 
-          return UserEmailVerificationModel.findByEmail(payload.email)
+          return UserEmailVerificationModel.findByEmail(payload.email);
         })
         .then((token) => {
-          const encodedEmail = encodeURIComponent(payload.email);
           const encodedToken = encodeURIComponent(token.getToken());
-          const verificationUrl = `/users/verify?email=${encodedEmail}&token=${encodedToken}`;
+          const verificationUrl = `/users/verify?token=${encodedToken}`;
 
           server.inject(verificationUrl, (res) => {
             expect(res.statusCode).to.equal(200);

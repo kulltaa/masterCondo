@@ -16,6 +16,9 @@ require('sinon-as-promised')(Promise);
 const expect = chai.expect;
 
 describe('Login', () => {
+  let server;
+  let stubSendEmail;
+
   beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();

@@ -174,6 +174,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
             { is_active: true },
             { where: { email } }
           );
+        },
+
+        updatePasswordByEmail(email, password) {
+          const passwordHash = this.hash(password);
+          return this.update(
+            { password_hash: passwordHash },
+            { where: { email } }
+          );
         }
       }
     }

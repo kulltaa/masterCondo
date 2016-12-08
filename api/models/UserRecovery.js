@@ -135,9 +135,9 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Find by email
+         * Find by token
          *
-         * @param {String} email
+         * @param {String} token
          * @return {Promise}
          */
         findByToken(token) {
@@ -151,16 +151,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         /**
          * Build verification url
          *
-         * @param {String} email
          * @param {String} token
          * @return {String}
          */
-        buildRecoveryUrl(email, token) {
+        buildRecoveryUrl(token) {
           const baseUrl = utils.getBaseUrl();
-          const encodedEmail = encodeURIComponent(email);
           const encodedToken = encodeURIComponent(token);
 
-          return `${baseUrl}/users/recover?email=${encodedEmail}&token=${encodedToken}`;
+          return `${baseUrl}/users/recover?token=${encodedToken}`;
         },
 
         /**
@@ -172,7 +170,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          * @return {{to: String, subject: String, html: String}}
          */
         createEmailRecoveryPayload(email, token) {
-          const recoveryUrl = this.buildRecoveryUrl(email, token);
+          const recoveryUrl = this.buildRecoveryUrl(token);
 
           const emailPayload = {
             to: email,
@@ -184,37 +182,43 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Validate email & token
+         * Find and validate token
          *
          * @param {String} token
-         * @param {String} email
          * @return {{isValid: Boolean, isExpired: Boolean}}
          */
-        validate(email, token) {
+        findAndValidateToken(token) {
           return this.findByToken(token)
-            .then((result) => {
-              if (!result) {
-                return { isValid: false };
-              }
-
-              const status = result.getStatus();
-              if (!status) {
-                return { isValid: false };
-              }
-
-              const expiredAt = result.getTokenExpiredAt();
-              if (moment(expiredAt).isBefore(moment())) {
-                return { isExpired: true };
-              }
-
-              const verifiedEmail = result.getEmail();
-              if (email !== verifiedEmail) {
-                return { isValid: false };
-              }
-
-              return {};
-            })
+            .then(result => this.validate(result))
             .catch(error => Promise.reject(error));
+        },
+
+        /**
+         * Validate token record
+         *
+         * @param {Object} tokenRecord
+         * @return {{isValid: Boolean, isExpired: Boolean}}
+         */
+        validate(tokenRecord) {
+          try {
+            if (!tokenRecord) {
+              return { isValid: false };
+            }
+
+            const status = tokenRecord.getStatus();
+            if (!status) {
+              return { isValid: false };
+            }
+
+            const expiredAt = tokenRecord.getTokenExpiredAt();
+            if (moment(expiredAt).isBefore(moment())) {
+              return { isExpired: true };
+            }
+
+            return { isValid: true, isExpired: false };
+          } catch (e) {
+            return { isValid: false, isExpired: true };
+          }
         }
       }
     }

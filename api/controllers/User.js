@@ -15,7 +15,6 @@ const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user)
 
   return UserEmailVerificationModel.createNewToken(email)
     .then((token) => {
-      // const baseUrl = utils.getBaseUrl(request);
       const emailPayload = UserEmailVerificationModel.createEmailVerificationPayload(email, token);
 
       const sendEmail = request.server.methods.services.mailer.send(emailPayload);
@@ -36,18 +35,18 @@ const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user)
  *
  * @param {Object} request
  * @param {Object} reply
- * @param {Object} result
+ * @param {Object} userRecord
  * @return {*}
  */
-const handleLogin = function handleLogin(request, reply, user) {
-  if (!user) {
+const handleLogin = function handleLogin(request, reply, userRecord) {
+  if (!userRecord) {
     return reply.notFound(new Error('Email does not exist'));
   }
 
   const UserModel = request.getDb().getModel('User');
   const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
 
-  const hash = user.getPasswordHash();
+  const hash = userRecord.getPasswordHash();
   const password = request.payload.password;
   const isPasswordCorrect = UserModel.validatePassword(password, hash);
 
@@ -55,52 +54,57 @@ const handleLogin = function handleLogin(request, reply, user) {
     return reply.unauthorized(new Error('Please check your email/password again'));
   }
 
-  const userId = user.getId();
+  const userId = userRecord.getId();
   return UserAccessTokenModel.createNewAccessToken(userId)
     .then(token => reply.success({ access_token: token }))
     .catch(error => reply.serverError(error));
 };
 
 /**
- * On validate token result
+ * On found verify token
  *
  * @param {Object} request
  * @param {Object} reply
- * @param {Object} result
+ * @param {Object} tokenRecord
  * @return {*}
  */
-const onValidateEmailVerification = function onValidateEmailVerification(request, reply, result) {
+const onFoundVerifyToken = function onFoundVerifyToken(request, reply, tokenRecord) {
   const UserModel = request.getDb().getModel('User');
+  const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
+
+  const result = UserEmailVerificationModel.validate(tokenRecord);
   const { isValid, isExpired } = result;
 
-  if (isValid !== undefined && isValid === false) {
-    return reply.unauthorized(new Error('Email/Token invalid'));
+  if (!isValid) {
+    return reply.unauthorized(new Error('Token invalid'));
   }
 
-  if (isExpired !== undefined && isExpired) {
+  if (isExpired) {
     return reply.unauthorized(new Error('Token expired'));
   }
 
-  return UserModel.verifyByEmail(request.query.email)
+  const email = tokenRecord.getEmail();
+
+  return UserModel.verifyByEmail(email)
     .then(() => reply.success({ status: 'success' }))
     .catch(error => Promise.reject(error));
 };
 
 /**
- * Find email to recover
+ * On found forgot email
  *
  * @param {Object} request
  * @param {Object} reply
- * @param {Object} user
+ * @param {Object} userRecord
  * @return {*}
  */
-const onFindForgotEmail = function onFindEmailRecovery(request, reply, user) {
-  if (!user) {
+const onFoundForgotEmail = function onFoundForgotEmail(request, reply, userRecord) {
+  if (!userRecord) {
     return reply.notFound(new Error('Email has not been registered'));
   }
 
   const UserRecoveryModel = request.getDb().getModel('UserRecovery');
-  const email = user.getEmail();
+  const email = userRecord.getEmail();
 
   return UserRecoveryModel.createNewToken(email)
     .then((token) => {
@@ -108,6 +112,37 @@ const onFindForgotEmail = function onFindEmailRecovery(request, reply, user) {
 
       return request.server.methods.services.mailer.send(emailPayload);
     })
+    .then(() => reply.success({ status: 'success' }))
+    .catch(error => Promise.reject(error));
+};
+
+/**
+ * On found recover token
+ *
+ * @param {Object} request
+ * @param {Object} reply
+ * @param {Object} tokenRecord
+ * @return {*}
+ */
+const onFoundRecoveryToken = function onFoundRecoveryToken(request, reply, tokenRecord) {
+  const UserModel = request.getDb().getModel('User');
+  const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+
+  const result = UserRecoveryModel.validate(tokenRecord);
+  const { isValid, isExpired } = result;
+
+  if (!isValid) {
+    return reply.unauthorized(new Error('Token invalid'));
+  }
+
+  if (isExpired) {
+    return reply.unauthorized(new Error('Token expired'));
+  }
+
+  const email = tokenRecord.getEmail();
+  const password = request.payload.password;
+
+  return UserModel.updatePasswordByEmail(email, password)
     .then(() => reply.success({ status: 'success' }))
     .catch(error => Promise.reject(error));
 };
@@ -141,7 +176,7 @@ module.exports = {
     const email = request.payload.email;
 
     return UserModel.findByEmail(email)
-      .then(user => handleLogin(request, reply, user))
+      .then(userRecord => handleLogin(request, reply, userRecord))
       .catch(error => reply.serverError(error));
   },
 
@@ -154,10 +189,10 @@ module.exports = {
    */
   verify(request, reply) {
     const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
-    const { email, token } = request.query;
+    const token = request.query.token;
 
-    return UserEmailVerificationModel.validate(email, token)
-      .then(result => onValidateEmailVerification(request, reply, result))
+    return UserEmailVerificationModel.findByToken(token)
+      .then(tokenRecord => onFoundVerifyToken(request, reply, tokenRecord))
       .catch(error => reply.serverError(error));
   },
 
@@ -173,7 +208,7 @@ module.exports = {
     const email = request.payload.email;
 
     return UserModel.findByEmail(email)
-      .then(user => onFindForgotEmail(request, reply, user))
+      .then(userRecord => onFoundForgotEmail(request, reply, userRecord))
       .catch(error => reply.serverError(error));
   },
 
@@ -186,23 +221,39 @@ module.exports = {
    */
   validateForgotParams(request, reply) {
     const UserRecoveryModel = request.getDb().getModel('UserRecovery');
-    const { email, token } = request.query;
+    const token = request.query.token;
 
-    return UserRecoveryModel.validate(email, token)
+    return UserRecoveryModel.findAndValidateToken(token)
       .then((result) => {
         const { isValid, isExpired } = result;
 
-        if (isValid !== undefined && isValid === false) {
-          return reply.unauthorized(new Error('Email/Token invalid'));
+        if (!isValid) {
+          return reply.unauthorized(new Error('Token invalid'));
         }
 
-        if (isExpired !== undefined && isExpired) {
+        if (isExpired) {
           return reply.unauthorized(new Error('Token expired'));
         }
 
         return reply.success({ status: 'success' });
       })
       .catch(error => reply.serverError(error));
+  },
+
+  /**
+   * Recover password
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {*}
+   */
+  recover(request, reply) {
+    const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+    const token = request.payload.token;
+
+    return UserRecoveryModel.findByToken(token)
+      .then(tokenRecord => onFoundRecoveryToken(request, reply, tokenRecord))
+      .catch(error => Promise.reject(error));
   },
 
   /**

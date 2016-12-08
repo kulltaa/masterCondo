@@ -40,6 +40,15 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       instanceMethods: {
 
         /**
+         * Get email
+         *
+         * @return {String}
+         */
+        getEmail() {
+          return this.getDataValue('email');
+        },
+
+        /**
          * Get token value
          *
          * @return {String}
@@ -55,15 +64,6 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          */
         getTokenExpiredAt() {
           return this.getDataValue('token_expired_at');
-        },
-
-        /**
-         * Get email
-         *
-         * @return {String}
-         */
-        getEmail() {
-          return this.getDataValue('email');
         }
       },
       classMethods: {
@@ -110,16 +110,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         /**
          * Build verification url
          *
-         * @param {String} email
          * @param {String} token
          * @return {String}
          */
-        buildVerificationUrl(email, token) {
+        buildVerificationUrl(token) {
           const baseUrl = utils.getBaseUrl();
-          const encodedEmail = encodeURIComponent(email);
           const encodedToken = encodeURIComponent(token);
 
-          return `${baseUrl}/users/verify?email=${encodedEmail}&token=${encodedToken}`;
+          return `${baseUrl}/users/verify?token=${encodedToken}`;
         },
 
         /**
@@ -131,7 +129,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          * @return {{to: String, subject: String, html: String}}
          */
         createEmailVerificationPayload(email, token) {
-          const verificationUrl = this.buildVerificationUrl(email, token);
+          const verificationUrl = this.buildVerificationUrl(token);
 
           const emailPayload = {
             to: email,
@@ -171,32 +169,38 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Validate email & token
+         * Find and validate token
          *
          * @param {String} token
-         * @param {String} email
          * @return {{isValid: Boolean, isExpired: Boolean}}
          */
-        validate(email, token) {
+        findAndValidateToken(token) {
           return this.findByToken(token)
-            .then((result) => {
-              if (!result) {
-                return { isValid: false };
-              }
-
-              const expiredAt = result.getTokenExpiredAt();
-              if (moment(expiredAt).isBefore(moment())) {
-                return { isExpired: true };
-              }
-
-              const verifiedEmail = result.getEmail();
-              if (email !== verifiedEmail) {
-                return { isValid: false };
-              }
-
-              return {};
-            })
+            .then(tokenRecord => this.validate(tokenRecord))
             .catch(error => Promise.reject(error));
+        },
+
+        /**
+         * Validate token record
+         *
+         * @param {Object} tokenRecord
+         * @return {{isValid: Boolean, isExpired: Boolean}}
+         */
+        validate(tokenRecord) {
+          try {
+            if (!tokenRecord) {
+              return { isValid: false };
+            }
+
+            const expiredAt = tokenRecord.getTokenExpiredAt();
+            if (moment(expiredAt).isBefore(moment())) {
+              return { isExpired: true };
+            }
+
+            return { isValid: true, isExpired: false };
+          } catch (e) {
+            return { isValid: false, isExpired: true };
+          }
         }
       }
     }

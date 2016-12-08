@@ -85,6 +85,19 @@ module.exports = [
     }
   },
   {
+    method: 'POST',
+    path: '/users/recover',
+    config: {
+      handler: UserController.recover,
+      description: 'Recover password',
+      tags: ['api'],
+      validate: {
+        failAction,
+        payload: validators.user.recoverSchema()
+      }
+    }
+  },
+  {
     method: 'GET',
     path: '/users/status',
     config: {

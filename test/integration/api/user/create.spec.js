@@ -19,17 +19,6 @@ describe('Create', () => {
   let server;
   let stubSendEmail;
 
-  // before((done) => {
-  //   server = new Hapi.Server();
-  //   server.connection();
-  //
-  //   server.register(plugins, done);
-  // });
-  //
-  // after((done) => {
-  //   server.stop(done);
-  // });
-
   beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
@@ -272,6 +261,7 @@ describe('Create', () => {
             payload.password,
             user.getPasswordHash()
           )).to.equal.true;
+          expect(user.getStatus()).to.equal(false);
 
           const getAccessToken = UserAccessTokenModel.findByUserId(userId);
           const getEmailVerificationToken = UserEmailVerificationModel.findByEmail(email);
