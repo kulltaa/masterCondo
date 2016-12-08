@@ -19,6 +19,17 @@ describe('Create', () => {
   let server;
   let stubSendEmail;
 
+  // before((done) => {
+  //   server = new Hapi.Server();
+  //   server.connection();
+  //
+  //   server.register(plugins, done);
+  // });
+  //
+  // after((done) => {
+  //   server.stop(done);
+  // });
+
   beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
