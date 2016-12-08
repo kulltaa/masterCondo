@@ -199,7 +199,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
 
             return { isValid: true, isExpired: false };
           } catch (e) {
-            return { isValid: false, isExpired: true };
+            return { isValid: false };
           }
         }
       }

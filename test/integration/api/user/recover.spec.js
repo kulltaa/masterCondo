@@ -457,23 +457,24 @@ describe('Recover', () => {
         UserRecoveryModel.findByEmail(payload.email)
           .then((result) => {
             const token = result.getToken();
+            const newPassword = 'new-password';
 
             const recoverOptions = {
               method: 'POST',
               url: '/users/recover',
               payload: {
                 token,
-                password: 'new-password',
-                password_confirmation: 'new-password'
+                password: newPassword,
+                password_confirmation: newPassword
               }
             };
 
-            const loginOptions = {
+            const loginNewPasswordOptions = {
               method: 'POST',
               url: '/users/login',
               payload: {
                 email: payload.email,
-                password: 'new-password'
+                password: newPassword
               }
             };
 
@@ -482,7 +483,7 @@ describe('Recover', () => {
               expect(res.result).to.include.keys('status');
               expect(res.result.status).to.equal('success');
 
-              server.inject(loginOptions, (res) => {
+              server.inject(loginNewPasswordOptions, (res) => {
                 expect(res.statusCode).to.equal(200);
                 expect(res.result).to.include.keys('access_token');
 
