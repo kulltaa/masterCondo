@@ -8,8 +8,8 @@ const createTable = function createTable(queryInterface, Sequelize) {
         autoIncrement: true,
         primaryKey: true
       },
-      email: {
-        type: Sequelize.STRING,
+      user_id: {
+        type: Sequelize.INTEGER.UNSIGNED,
         allowNull: false
       },
       token: {

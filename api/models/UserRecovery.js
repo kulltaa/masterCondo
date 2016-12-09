@@ -21,7 +21,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         autoIncrement: true,
         primaryKey: true
       },
-      email: {
+      user_id: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false
       },
@@ -44,12 +44,12 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       instanceMethods: {
 
         /**
+         * Get user id
          *
-         *
-         *
+         * @return {Int}
          */
-        getEmail() {
-          return this.getDataValue('email');
+        getUserId() {
+          return this.getDataValue('user_id');
         },
 
         /**
@@ -104,15 +104,15 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         /**
          * Create new recovery token
          *
-         * @param {String} email
+         * @param {Int} userId
          * @return {Promise}
          */
-        createNewToken(email) {
+        createNewToken(userId) {
           const token = this.genToken();
           const payload = {
+            user_id: userId,
             token: token.value,
-            token_expired_at: token.expired,
-            email
+            token_expired_at: token.expired
           };
 
           return this.create(payload)
@@ -121,14 +121,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Find by email
+         * Find by user id
          *
-         * @param {String} email
+         * @param {Int} userId
          * @return {Promise}
          */
-        findByEmail(email) {
+        findByUserId(userId) {
           const cond = {
-            where: { email }
+            where: { user_id: userId }
           };
 
           return this.findOne(cond);
@@ -219,6 +219,19 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           } catch (e) {
             return { isValid: false };
           }
+        },
+
+        /**
+         * Invalidate token
+         *
+         * @param {Int} userId
+         * @return {Promise}
+         */
+        invalidateTokenByUserId(userId) {
+          return this.update(
+            { is_active: false },
+            { where: { user_id: userId } }
+          );
         }
       }
     }

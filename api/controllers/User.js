@@ -13,7 +13,7 @@ const onCreatedUserSuccess = function onCreatedUserSuccess(request, reply, user)
   const userId = user.getId();
   const email = user.getEmail();
 
-  return UserEmailVerificationModel.createNewToken(email)
+  return UserEmailVerificationModel.createNewToken(userId)
     .then((token) => {
       const emailPayload = UserEmailVerificationModel.createEmailVerificationPayload(email, token);
 
@@ -83,9 +83,9 @@ const onFoundVerifyToken = function onFoundVerifyToken(request, reply, tokenReco
     return reply.unauthorized(new Error('Token expired'));
   }
 
-  const email = tokenRecord.getEmail();
+  const userId = tokenRecord.getUserId();
 
-  return UserModel.verifyByEmail(email)
+  return UserModel.verifyById(userId)
     .then(() => reply.success({ status: 'success' }))
     .catch(error => Promise.reject(error));
 };
@@ -104,9 +104,10 @@ const onFoundForgotEmail = function onFoundForgotEmail(request, reply, userRecor
   }
 
   const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+  const userId = userRecord.getId();
   const email = userRecord.getEmail();
 
-  return UserRecoveryModel.createNewToken(email)
+  return UserRecoveryModel.createNewToken(userId)
     .then((token) => {
       const emailPayload = UserRecoveryModel.createEmailRecoveryPayload(email, token);
 
@@ -126,6 +127,7 @@ const onFoundForgotEmail = function onFoundForgotEmail(request, reply, userRecor
  */
 const onFoundRecoveryToken = function onFoundRecoveryToken(request, reply, tokenRecord) {
   const UserModel = request.getDb().getModel('User');
+  const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
   const UserRecoveryModel = request.getDb().getModel('UserRecovery');
 
   const result = UserRecoveryModel.validate(tokenRecord);
@@ -139,10 +141,14 @@ const onFoundRecoveryToken = function onFoundRecoveryToken(request, reply, token
     return reply.unauthorized(new Error('Token expired'));
   }
 
-  const email = tokenRecord.getEmail();
+  const userId = tokenRecord.getUserId();
   const password = request.payload.password;
 
-  return UserModel.updatePasswordByEmail(email, password)
+  const updateUserPassword = UserModel.setPassword(userId, password);
+  const invalidateAccessToken = UserAccessTokenModel.invalidateTokenByUserId(userId);
+  const invalidateRecoveryToken = UserRecoveryModel.invalidateTokenByUserId(userId);
+
+  return Promise.all([updateUserPassword, invalidateAccessToken, invalidateRecoveryToken])
     .then(() => reply.success({ status: 'success' }))
     .catch(error => Promise.reject(error));
 };

@@ -13,31 +13,9 @@ const TOKEN_TYPE = 'Bearer';
  */
 const validateAccessToken = function validateAccessToken(token, callback) {
   const request = this;
-  // const User = request.getDb().getModel('User');
   const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
 
   return UserAccessTokenModel.validateAccessToken(token, callback);
-
-  // UserAccessToken
-  //   .findByAccessToken(token, { includedModels: [User] })
-  //   .then((result) => {
-  //     if (!result) {
-  //       callback(null, false);
-  //
-  //       return Promise.resolve();
-  //     }
-  //
-  //     callback(null, true, { user: result.User });
-  //
-  //     return Promise.resolve();
-  //   })
-  //   .catch((error) => {
-  //     request.log('error', error);
-  //
-  //     callback(null, false);
-  //
-  //     return Promise.resolve();
-  //   });
 };
 
 

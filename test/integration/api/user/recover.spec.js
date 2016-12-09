@@ -131,9 +131,10 @@ describe('Forgot', () => {
 
     server.inject(createNewUserOptions, (res) => {
       const request = res.request;
+      const UserModel = request.getDb().getModel('User');
       const UserRecoveryModel = request.getDb().getModel('UserRecovery');
 
-      const spyCreateEmailRecoveryToken = sinon.spy(UserRecoveryModel, 'createNewToken');
+      const spyCreateRecoveryToken = sinon.spy(UserRecoveryModel, 'createNewToken');
       const spyCreateEmailRecoveryPayload = sinon.spy(UserRecoveryModel, 'createEmailRecoveryPayload');
 
       server.inject(forgotOptions, (res) => {
@@ -141,9 +142,14 @@ describe('Forgot', () => {
         expect(res.result).to.include.keys('status');
         expect(res.result.status).to.equal('success');
 
-        sinon.assert.calledWith(spyCreateEmailRecoveryToken, payload.email);
+        UserModel.findByEmail(payload.email)
+          .then((user) => {
+            const userId = user.getId();
 
-        UserRecoveryModel.findByEmail(payload.email)
+            sinon.assert.calledWith(spyCreateRecoveryToken, userId);
+
+            return UserRecoveryModel.findByUserId(userId);
+          })
           .then((result) => {
             expect(result).to.not.null;
             expect(result.getStatus()).to.equal(true);
@@ -217,6 +223,61 @@ describe('Validate Forgot Params', () => {
     });
   });
 
+  it('should return error with status 401 when token inactive', (done) => {
+    const payload = {
+      email: faker.internet.email(),
+      username: faker.internet.userName(),
+      password: 'random-password',
+      password_confirmation: 'random-password'
+    };
+
+    const createNewUserOptions = {
+      method: 'POST',
+      url: '/users/register',
+      payload
+    };
+
+    server.inject(createNewUserOptions, (res) => {
+      const request = res.request;
+      const UserModel = request.getDb().getModel('User');
+      const UserRecoveryModel = request.getDb().getModel('UserRecovery');
+
+      const forgotOptions = {
+        method: 'POST',
+        url: '/users/forgot',
+        payload: {
+          email: payload.email
+        }
+      };
+
+      server.inject(forgotOptions, (res) => {
+        UserModel.findByEmail(payload.email)
+          .then((user) => {
+            const userId = user.getId();
+
+            return UserRecoveryModel.findByUserId(userId);
+          })
+          .then((result) => {
+            const userId = result.getUserId();
+            const token = result.getToken();
+
+            return UserRecoveryModel.invalidateTokenByUserId(userId)
+              .then((result) => {
+                const validateForgotParamsUrl = `/users/validate_forgot_params?token=${token}`;
+
+                server.inject(validateForgotParamsUrl, (res) => {
+                  expect(res.statusCode).to.equal(401);
+                  expect(res.result).to.include.keys('error');
+                  expect(res.result.error.message).to.equal('Token invalid');
+
+                  done();
+                });
+              });
+          });
+      });
+    });
+  });
+
   it('should return success when token valid', (done) => {
     const payload = {
       email: faker.internet.email(),
@@ -231,20 +292,26 @@ describe('Validate Forgot Params', () => {
       payload
     };
 
-    const forgotOptions = {
-      method: 'POST',
-      url: '/users/forgot',
-      payload: {
-        email: payload.email
-      }
-    };
-
     server.inject(createNewUserOptions, (res) => {
       const request = res.request;
+      const UserModel = request.getDb().getModel('User');
       const UserRecoveryModel = request.getDb().getModel('UserRecovery');
 
+      const forgotOptions = {
+        method: 'POST',
+        url: '/users/forgot',
+        payload: {
+          email: payload.email
+        }
+      };
+
       server.inject(forgotOptions, (res) => {
-        UserRecoveryModel.findByEmail(payload.email)
+        UserModel.findByEmail(payload.email)
+          .then((user) => {
+            const userId = user.getId();
+
+            return UserRecoveryModel.findByUserId(userId);
+          })
           .then((result) => {
             const token = result.getToken();
 
@@ -451,11 +518,22 @@ describe('Recover', () => {
     server.inject(createNewUserOptions, (res) => {
       const request = res.request;
       const UserModel = request.getDb().getModel('User');
+      const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
       const UserRecoveryModel = request.getDb().getModel('UserRecovery');
 
+      const spySetUserPassword = sinon.spy(UserModel, 'setPassword');
+      const spyInvalidateAccessToken = sinon.spy(UserAccessTokenModel, 'invalidateTokenByUserId');
+      const spyInvalidateRecoveryToken = sinon.spy(UserRecoveryModel, 'invalidateTokenByUserId');
+
       server.inject(forgotOptions, (res) => {
-        UserRecoveryModel.findByEmail(payload.email)
+        UserModel.findByEmail(payload.email)
+          .then((user) => {
+            const userId = user.getId();
+
+            return UserRecoveryModel.findByUserId(userId);
+          })
           .then((result) => {
+            const userId = result.getUserId();
             const token = result.getToken();
             const newPassword = 'new-password';
 
@@ -469,19 +547,23 @@ describe('Recover', () => {
               }
             };
 
-            const loginNewPasswordOptions = {
-              method: 'POST',
-              url: '/users/login',
-              payload: {
-                email: payload.email,
-                password: newPassword
-              }
-            };
-
             server.inject(recoverOptions, (res) => {
               expect(res.statusCode).to.equal(200);
               expect(res.result).to.include.keys('status');
               expect(res.result.status).to.equal('success');
+
+              sinon.assert.calledWith(spySetUserPassword, userId, newPassword);
+              sinon.assert.calledWith(spyInvalidateAccessToken, userId);
+              sinon.assert.calledWith(spyInvalidateRecoveryToken, userId);
+
+              const loginNewPasswordOptions = {
+                method: 'POST',
+                url: '/users/login',
+                payload: {
+                  email: payload.email,
+                  password: newPassword
+                }
+              };
 
               server.inject(loginNewPasswordOptions, (res) => {
                 expect(res.statusCode).to.equal(200);

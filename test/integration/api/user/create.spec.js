@@ -19,17 +19,6 @@ describe('Create', () => {
   let server;
   let stubSendEmail;
 
-  // before((done) => {
-  //   server = new Hapi.Server();
-  //   server.connection();
-  //
-  //   server.register(plugins, done);
-  // });
-  //
-  // after((done) => {
-  //   server.stop(done);
-  // });
-
   beforeEach((done) => {
     server = new Hapi.Server();
     server.connection();
@@ -275,38 +264,42 @@ describe('Create', () => {
           expect(user.getStatus()).to.equal(false);
 
           const getAccessToken = UserAccessTokenModel.findByUserId(userId);
-          const getEmailVerificationToken = UserEmailVerificationModel.findByEmail(email);
+          const getEmailVerificationToken = UserEmailVerificationModel.findByUserId(userId);
 
-          Promise.all([getAccessToken, getEmailVerificationToken])
-            .then((results) => {
-              const accessToken = results[0];
-              expect(accessToken).to.not.null;
-              expect(accessToken.getToken()).to.equal(responseToken);
+          return Promise.all([getAccessToken, getEmailVerificationToken]);
+        })
+        .then((results) => {
+          const accessToken = results[0];
+          expect(accessToken).to.not.null;
+          expect(accessToken.getToken()).to.equal(responseToken);
 
-              const emailVerificationToken = results[1];
-              expect(emailVerificationToken).to.not.null;
+          const emailVerificationToken = results[1];
+          expect(emailVerificationToken).to.not.null;
 
-              sinon.assert.calledWith(spyCreateEmailVerificationToken, email);
-              sinon.assert.calledWith(
-                spyCreateEmailVerificationPayload,
-                email,
-                emailVerificationToken.getToken()
-              );
+          sinon.assert.calledWith(
+            spyCreateEmailVerificationToken,
+            emailVerificationToken.getUserId()
+          );
 
-              const emailVerificationPayload = spyCreateEmailVerificationPayload.returnValues[0];
-              sinon.assert.calledWith(stubSendEmail, emailVerificationPayload);
+          sinon.assert.calledWith(
+            spyCreateEmailVerificationPayload,
+            payload.email,
+            emailVerificationToken.getToken()
+          );
 
-              sinon.assert.calledWith(spyCreateAccessToken, userId);
+          const emailVerificationPayload = spyCreateEmailVerificationPayload.returnValues[0];
+          sinon.assert.calledWith(stubSendEmail, emailVerificationPayload);
 
-              spyCreateEmailVerificationToken.restore();
-              spyCreateEmailVerificationPayload.restore();
+          sinon.assert.calledWith(spyCreateAccessToken, emailVerificationToken.getUserId());
 
-              spyCreateAccessToken.restore();
+          spyCreateEmailVerificationToken.restore();
+          spyCreateEmailVerificationPayload.restore();
 
-              done();
-            })
-            .catch(error => done(error));
-        });
+          spyCreateAccessToken.restore();
+
+          done();
+        })
+        .catch(error => done(error));
     });
   });
 

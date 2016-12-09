@@ -21,7 +21,7 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         autoIncrement: true,
         primaryKey: true
       },
-      email: {
+      user_id: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false
       },
@@ -40,12 +40,12 @@ module.exports = function createUserModel(sequelize, DataTypes) {
       instanceMethods: {
 
         /**
-         * Get email
+         * Get user id
          *
-         * @return {String}
+         * @return {Int}
          */
-        getEmail() {
-          return this.getDataValue('email');
+        getUserId() {
+          return this.getDataValue('user_id');
         },
 
         /**
@@ -89,17 +89,17 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Create new email verification token
+         * Create new verification token by user id
          *
-         * @param {String} email
+         * @param {Int} userId
          * @return {Promise}
          */
-        createNewToken(email) {
+        createNewToken(userId) {
           const token = this.genToken();
           const payload = {
+            user_id: userId,
             token: token.value,
-            token_expired_at: token.expired,
-            email
+            token_expired_at: token.expired
           };
 
           return this.create(payload)
@@ -141,14 +141,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         },
 
         /**
-         * Find by email
+         * Find by user id
          *
-         * @param {String} email
+         * @param {Int} userId
          * @return {Promise}
          */
-        findByEmail(email) {
+        findByUserId(userId) {
           const cond = {
-            where: { email }
+            where: { user_id: userId }
           };
 
           return this.findOne(cond);

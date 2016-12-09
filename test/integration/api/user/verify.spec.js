@@ -90,7 +90,7 @@ describe('Verify', () => {
         .then((user) => {
           const userId = user.getId();
 
-          return UserEmailVerificationModel.findByEmail(payload.email);
+          return UserEmailVerificationModel.findByUserId(userId);
         })
         .then((token) => {
           const encodedToken = encodeURIComponent(token.getToken());

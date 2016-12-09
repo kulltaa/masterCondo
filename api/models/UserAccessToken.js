@@ -183,6 +183,19 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return this.create(payload)
             .then(() => token.value)
             .catch(error => Promise.reject(error));
+        },
+
+        /**
+         * Invalidate token
+         *
+         * @param {Int} userId
+         * @return {Promise}
+         */
+        invalidateTokenByUserId(userId) {
+          return this.update(
+            { is_active: false },
+            { where: { user_id: userId } }
+          );
         }
       }
     }

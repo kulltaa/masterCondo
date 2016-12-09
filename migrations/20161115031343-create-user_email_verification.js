@@ -8,8 +8,8 @@ const createTable = function createTable(queryInterface, Sequelize) {
         autoIncrement: true,
         primaryKey: true
       },
-      email: {
-        type: Sequelize.STRING,
+      user_id: {
+        type: Sequelize.INTEGER.UNSIGNED,
         allowNull: false
       },
       token: {
@@ -52,7 +52,7 @@ const createUniqueIndex = function createUniqueIndex(queryInterface, indexName, 
 module.exports = {
   up(queryInterface, Sequelize) {
     return createTable(queryInterface, Sequelize)
-      .then(() => createUniqueIndex(queryInterface, 'idx_email', 'email'))
+      .then(() => createUniqueIndex(queryInterface, 'idx_user_id', 'user_id'))
       .catch(error => console.log(error));
   },
 
