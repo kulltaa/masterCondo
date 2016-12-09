@@ -507,14 +507,6 @@ describe('Recover', () => {
       payload
     };
 
-    const forgotOptions = {
-      method: 'POST',
-      url: '/users/forgot',
-      payload: {
-        email: payload.email
-      }
-    };
-
     server.inject(createNewUserOptions, (res) => {
       const request = res.request;
       const UserModel = request.getDb().getModel('User');
@@ -524,6 +516,14 @@ describe('Recover', () => {
       const spySetUserPassword = sinon.spy(UserModel, 'setPassword');
       const spyInvalidateAccessToken = sinon.spy(UserAccessTokenModel, 'invalidateTokenByUserId');
       const spyInvalidateRecoveryToken = sinon.spy(UserRecoveryModel, 'invalidateTokenByUserId');
+
+      const forgotOptions = {
+        method: 'POST',
+        url: '/users/forgot',
+        payload: {
+          email: payload.email
+        }
+      };
 
       server.inject(forgotOptions, (res) => {
         UserModel.findByEmail(payload.email)
