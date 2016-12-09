@@ -68,11 +68,11 @@ internals.implementation = (server, options) => {
         const { isValid, isExpired, credentials } = result;
 
         if (!isValid) {
-          return reply.unauthorized(new Error('Invalid access token'));
+          return reply.unauthorized(new Error('Token invalid'));
         }
 
         if (isExpired) {
-          return reply.unauthorized(new Error('Token is expired'));
+          return reply.unauthorized(new Error('Token expired'));
         }
 
         if (!credentials || typeof credentials !== 'object') {

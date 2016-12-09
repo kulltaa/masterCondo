@@ -86,6 +86,29 @@ module.exports = {
   },
 
   /**
+   * Validation schema for user logout
+   *
+   * @return {Object}
+   */
+  logoutSchema() {
+    return Joi
+      .object()
+      .options({
+        language: {
+          messages: {
+            wrapArrays: false
+          },
+          object: {
+            child: '!!{{reason}}'
+          }
+        }
+      })
+      .keys({
+        access_token: Joi.string().required()
+      });
+  },
+
+  /**
    * Verify email
    *
    * @return {Object}

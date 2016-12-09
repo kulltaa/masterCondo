@@ -61,19 +61,17 @@ const handleLogin = function handleLogin(request, reply, userRecord) {
 };
 
 /**
- * On found verify token
+ * Handle logout
  *
  * @param {Object} request
  * @param {Object} reply
- * @param {Object} tokenRecord
+ * @param {Object} result
  * @return {*}
  */
-const onFoundVerifyToken = function onFoundVerifyToken(request, reply, tokenRecord) {
-  const UserModel = request.getDb().getModel('User');
-  const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
-
-  const result = UserEmailVerificationModel.validate(tokenRecord);
-  const { isValid, isExpired } = result;
+const handleLogout = function handleLogout(request, reply, result) {
+  const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
+  const { data, validateResult } = result;
+  const { isValid, isExpired } = validateResult;
 
   if (!isValid) {
     return reply.unauthorized(new Error('Token invalid'));
@@ -83,6 +81,36 @@ const onFoundVerifyToken = function onFoundVerifyToken(request, reply, tokenReco
     return reply.unauthorized(new Error('Token expired'));
   }
 
+  const { tokenRecord } = data;
+  const token = tokenRecord.getToken();
+
+  return UserAccessTokenModel.invalidateToken(token)
+    .then(() => reply.success({ status: 'success' }))
+    .catch(error => Promise.reject(error));
+};
+
+/**
+ * On found verify token
+ *
+ * @param {Object} request
+ * @param {Object} reply
+ * @param {Object} tokenRecord
+ * @return {*}
+ */
+const onFoundVerifyToken = function onFoundVerifyToken(request, reply, result) {
+  const UserModel = request.getDb().getModel('User');
+  const { data, validateResult } = result;
+  const { isValid, isExpired } = validateResult;
+
+  if (!isValid) {
+    return reply.unauthorized(new Error('Token invalid'));
+  }
+
+  if (isExpired) {
+    return reply.unauthorized(new Error('Token expired'));
+  }
+
+  const { tokenRecord } = data;
   const userId = tokenRecord.getUserId();
 
   return UserModel.verifyById(userId)
@@ -125,13 +153,13 @@ const onFoundForgotEmail = function onFoundForgotEmail(request, reply, userRecor
  * @param {Object} tokenRecord
  * @return {*}
  */
-const onFoundRecoveryToken = function onFoundRecoveryToken(request, reply, tokenRecord) {
+const onFoundRecoveryToken = function onFoundRecoveryToken(request, reply, result) {
   const UserModel = request.getDb().getModel('User');
   const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
   const UserRecoveryModel = request.getDb().getModel('UserRecovery');
 
-  const result = UserRecoveryModel.validate(tokenRecord);
-  const { isValid, isExpired } = result;
+  const { data, validateResult } = result;
+  const { isValid, isExpired } = validateResult;
 
   if (!isValid) {
     return reply.unauthorized(new Error('Token invalid'));
@@ -141,12 +169,15 @@ const onFoundRecoveryToken = function onFoundRecoveryToken(request, reply, token
     return reply.unauthorized(new Error('Token expired'));
   }
 
+  const { tokenRecord } = data;
   const userId = tokenRecord.getUserId();
+  const token = tokenRecord.getToken();
+
   const password = request.payload.password;
 
   const updateUserPassword = UserModel.setPassword(userId, password);
   const invalidateAccessToken = UserAccessTokenModel.invalidateTokenByUserId(userId);
-  const invalidateRecoveryToken = UserRecoveryModel.invalidateTokenByUserId(userId);
+  const invalidateRecoveryToken = UserRecoveryModel.invalidateToken(token);
 
   return Promise.all([updateUserPassword, invalidateAccessToken, invalidateRecoveryToken])
     .then(() => reply.success({ status: 'success' }))
@@ -187,6 +218,22 @@ module.exports = {
   },
 
   /**
+   * User logout
+   *
+   * @param {Object} request
+   * @param {Object} reply
+   * @return {Promise}
+   */
+  logout(request, reply) {
+    const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
+    const accessToken = request.payload.access_token;
+
+    return UserAccessTokenModel.findAndValidateToken(accessToken)
+      .then(result => handleLogout(request, reply, result))
+      .catch(error => reply.serverError(error));
+  },
+
+  /**
    * Verify user
    *
    * @param {Object} request
@@ -197,8 +244,8 @@ module.exports = {
     const UserEmailVerificationModel = request.getDb().getModel('UserEmailVerification');
     const token = request.query.token;
 
-    return UserEmailVerificationModel.findByToken(token)
-      .then(tokenRecord => onFoundVerifyToken(request, reply, tokenRecord))
+    return UserEmailVerificationModel.findAndValidateToken(token)
+      .then(result => onFoundVerifyToken(request, reply, result))
       .catch(error => reply.serverError(error));
   },
 
@@ -231,7 +278,8 @@ module.exports = {
 
     return UserRecoveryModel.findAndValidateToken(token)
       .then((result) => {
-        const { isValid, isExpired } = result;
+        const { validateResult } = result;
+        const { isValid, isExpired } = validateResult;
 
         if (!isValid) {
           return reply.unauthorized(new Error('Token invalid'));
@@ -257,8 +305,8 @@ module.exports = {
     const UserRecoveryModel = request.getDb().getModel('UserRecovery');
     const token = request.payload.token;
 
-    return UserRecoveryModel.findByToken(token)
-      .then(tokenRecord => onFoundRecoveryToken(request, reply, tokenRecord))
+    return UserRecoveryModel.findAndValidateToken(token)
+      .then(result => onFoundRecoveryToken(request, reply, result))
       .catch(error => Promise.reject(error));
   },
 

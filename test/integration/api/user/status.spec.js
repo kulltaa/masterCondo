@@ -65,7 +65,7 @@ describe('Status', () => {
     server.inject(options, (res) => {
       expect(res.statusCode).to.equal(401);
       expect(res.result).to.include.keys('error');
-      expect(res.result.error.message).to.equal('Invalid access token');
+      expect(res.result.error.message).to.equal('Token invalid');
 
       done();
     });

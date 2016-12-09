@@ -189,7 +189,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          */
         findAndValidateToken(token) {
           return this.findByToken(token)
-            .then(result => this.validate(result))
+            .then((tokenRecord) => {
+              const result = UserRecovery.validate(tokenRecord);
+
+              return {
+                data: { tokenRecord },
+                validateResult: result
+              };
+            })
             .catch(error => Promise.reject(error));
         },
 
@@ -224,13 +231,13 @@ module.exports = function createUserModel(sequelize, DataTypes) {
         /**
          * Invalidate token
          *
-         * @param {Int} userId
+         * @param {String} token
          * @return {Promise}
          */
-        invalidateTokenByUserId(userId) {
+        invalidateToken(token) {
           return this.update(
             { is_active: false },
-            { where: { user_id: userId } }
+            { where: { token } }
           );
         }
       }

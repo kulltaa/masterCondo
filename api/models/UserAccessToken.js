@@ -137,24 +137,24 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return this.findOne(cond);
         },
 
-        // findAndValidateToken(token, callback) {
-        //   return this.findByToken(token)
-        //     .then((tokenRecord) => {
-        //       const result = UserAccessToken.validate(tokenRecord);
-        //
-        //       const { isValid, isExpired } = result;
-        //       if (!isValid) {
-        //         return callback(null, { isValid: false });
-        //       }
-        //
-        //       if (isExpired) {
-        //         return callback(null, { isValid: true, isExpired: true });
-        //       }
-        //
-        //       return callback(null, { credentials: { user: tokenRecord.User } });
-        //     })
-        //     .catch(error => callback(error));
-        // },
+        /**
+         * Find and validate token
+         *
+         * @param {String} token
+         * @return {{isValid: Boolean, isExpired: Boolean}}
+         */
+        findAndValidateToken(token) {
+          return this.findByToken(token)
+            .then((tokenRecord) => {
+              const result = UserAccessToken.validate(tokenRecord);
+
+              return {
+                data: { tokenRecord },
+                validateResult: result
+              };
+            })
+            .catch(error => Promise.reject(error));
+        },
 
         /**
          * validateAccessToken
@@ -213,6 +213,19 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return this.update(
             { is_active: false },
             { where: { user_id: userId } }
+          );
+        },
+
+        /**
+         * Invalidate token
+         *
+         * @param {String} token
+         * @return {Promise}
+         */
+        invalidateToken(token) {
+          return this.update(
+            { is_active: false },
+            { where: { access_token: token } }
           );
         }
       }

@@ -46,6 +46,19 @@ module.exports = [
     }
   },
   {
+    method: 'POST',
+    path: '/users/logout',
+    config: {
+      handler: UserController.logout,
+      description: 'User logout',
+      tags: ['api'],
+      validate: {
+        failAction,
+        payload: validators.user.logoutSchema()
+      }
+    }
+  },
+  {
     method: 'GET',
     path: '/users/verify',
     config: {

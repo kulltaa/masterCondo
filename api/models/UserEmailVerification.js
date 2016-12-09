@@ -176,7 +176,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
          */
         findAndValidateToken(token) {
           return this.findByToken(token)
-            .then(tokenRecord => this.validate(tokenRecord))
+            .then((tokenRecord) => {
+              const result = UserEmailVerification.validate(tokenRecord);
+
+              return {
+                data: { tokenRecord },
+                validateResult: result
+              };
+            })
             .catch(error => Promise.reject(error));
         },
 

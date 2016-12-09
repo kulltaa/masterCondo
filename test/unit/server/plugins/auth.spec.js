@@ -95,14 +95,14 @@ describe('Auth', () => {
       server.inject(options, (res) => {
         expect(res.statusCode).to.equal(401);
         expect(res.result).to.include.keys('error');
-        expect(res.result.error.message).to.equal('Invalid access token');
+        expect(res.result.error.message).to.equal('Token invalid');
         sinon.assert.calledWith(stub, token);
 
         done();
       });
     });
 
-    it('should return error with status code 401 when token is expired', (done) => {
+    it('should return error with status code 401 when token expired', (done) => {
       const credentials = {
         username: 'some-username'
       };
@@ -135,7 +135,7 @@ describe('Auth', () => {
       server.inject(options, (res) => {
         expect(res.statusCode).to.equal(401);
         expect(res.result).to.include.keys('error');
-        expect(res.result.error.message).to.equal('Token is expired');
+        expect(res.result.error.message).to.equal('Token expired');
         sinon.assert.calledWith(stub, token);
 
         done();

@@ -261,7 +261,7 @@ describe('Validate Forgot Params', () => {
             const userId = result.getUserId();
             const token = result.getToken();
 
-            return UserRecoveryModel.invalidateTokenByUserId(userId)
+            return UserRecoveryModel.invalidateToken(token)
               .then((result) => {
                 const validateForgotParamsUrl = `/users/validate_forgot_params?token=${token}`;
 
@@ -314,7 +314,6 @@ describe('Validate Forgot Params', () => {
           })
           .then((result) => {
             const token = result.getToken();
-
             const validateForgotParamsUrl = `/users/validate_forgot_params?token=${token}`;
 
             server.inject(validateForgotParamsUrl, (res) => {
@@ -515,7 +514,7 @@ describe('Recover', () => {
 
       const spySetUserPassword = sinon.spy(UserModel, 'setPassword');
       const spyInvalidateAccessToken = sinon.spy(UserAccessTokenModel, 'invalidateTokenByUserId');
-      const spyInvalidateRecoveryToken = sinon.spy(UserRecoveryModel, 'invalidateTokenByUserId');
+      const spyInvalidateRecoveryToken = sinon.spy(UserRecoveryModel, 'invalidateToken');
 
       const forgotOptions = {
         method: 'POST',
@@ -554,7 +553,7 @@ describe('Recover', () => {
 
               sinon.assert.calledWith(spySetUserPassword, userId, newPassword);
               sinon.assert.calledWith(spyInvalidateAccessToken, userId);
-              sinon.assert.calledWith(spyInvalidateRecoveryToken, userId);
+              sinon.assert.calledWith(spyInvalidateRecoveryToken, token);
 
               const loginNewPasswordOptions = {
                 method: 'POST',
