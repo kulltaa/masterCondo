@@ -205,14 +205,14 @@ module.exports = function createUserModel(sequelize, DataTypes) {
               return { isValid: false };
             }
 
-            const status = tokenRecord.getStatus();
-            if (!status) {
+            const isActive = tokenRecord.getStatus();
+            if (!isActive) {
               return { isValid: false };
             }
 
             const expiredAt = tokenRecord.getTokenExpiredAt();
             if (moment(expiredAt).isBefore(moment())) {
-              return { isExpired: true };
+              return { isValid: true, isExpired: true };
             }
 
             return { isValid: true, isExpired: false };

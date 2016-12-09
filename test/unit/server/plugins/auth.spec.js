@@ -107,7 +107,7 @@ describe('Auth', () => {
         username: 'some-username'
       };
 
-      stub.yields(null, { isExpired: true });
+      stub.yields(null, { isValid: true, isExpired: true });
 
       const token = 'some-access-token';
       const options = {
@@ -147,7 +147,7 @@ describe('Auth', () => {
         username: 'some-username'
       };
 
-      stub.yields(null, { credentials });
+      stub.yields(null, { isValid: true, isExpired: false, credentials });
 
       const token = 'some-access-token';
       const options = {

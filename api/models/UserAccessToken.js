@@ -137,33 +137,51 @@ module.exports = function createUserModel(sequelize, DataTypes) {
           return this.findOne(cond);
         },
 
+        // findAndValidateToken(token, callback) {
+        //   return this.findByToken(token)
+        //     .then((tokenRecord) => {
+        //       const result = UserAccessToken.validate(tokenRecord);
+        //
+        //       const { isValid, isExpired } = result;
+        //       if (!isValid) {
+        //         return callback(null, { isValid: false });
+        //       }
+        //
+        //       if (isExpired) {
+        //         return callback(null, { isValid: true, isExpired: true });
+        //       }
+        //
+        //       return callback(null, { credentials: { user: tokenRecord.User } });
+        //     })
+        //     .catch(error => callback(error));
+        // },
+
         /**
          * validateAccessToken
          *
          * @param {String} token
          * @param {Function} callback
          */
-        validateAccessToken(token, callback) {
-          return this.findByToken(token)
-            .then((result) => {
-              if (!result) {
-                return callback(null, { isValid: false });
-              }
+        validate(tokenRecord) {
+          try {
+            if (!tokenRecord) {
+              return { isValid: false };
+            }
 
-              const isActive = result.getStatus();
-              if (!isActive) {
-                return callback(null, { isValid: false });
-              }
+            const isActive = tokenRecord.getStatus();
+            if (!isActive) {
+              return { isValid: false };
+            }
 
-              const expiredAt = result.getTokenExpiredAt();
-              if (moment(expiredAt).isBefore(moment())) {
-                return callback(null, { isExpired: true });
-              }
+            const expiredAt = tokenRecord.getTokenExpiredAt();
+            if (moment(expiredAt).isBefore(moment())) {
+              return { isValid: true, isExpired: true };
+            }
 
-              const user = result.User;
-              return callback(null, { credentials: { user } });
-            })
-            .catch(error => callback(error));
+            return { isValid: true, isExpired: false };
+          } catch (e) {
+            return { isValid: false };
+          }
         },
 
         /**

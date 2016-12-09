@@ -12,12 +12,32 @@ const TOKEN_TYPE = 'Bearer';
  * @return {undefined}
  */
 const validateAccessToken = function validateAccessToken(token, callback) {
-  const request = this;
-  const UserAccessTokenModel = request.getDb().getModel('UserAccessToken');
+  const UserAccessTokenModel = this.getDb().getModel('UserAccessToken');
 
-  return UserAccessTokenModel.validateAccessToken(token, callback);
+  UserAccessTokenModel.findByToken(token)
+    .then((tokenRecord) => {
+      const result = UserAccessTokenModel.validate(tokenRecord);
+      const { isValid, isExpired } = result;
+
+      if (!isValid) {
+        callback(null, { isValid: false });
+        return Promise.resolve();
+      }
+
+      if (isExpired) {
+        callback(null, { isValid: true, isExpired: true });
+        return Promise.resolve();
+      }
+
+      callback(null, {
+        isValid: true,
+        isExpired: false,
+        credentials: { user: tokenRecord.User } }
+      );
+      return Promise.resolve();
+    })
+    .catch(error => callback(error));
 };
-
 
 const internals = {};
 
@@ -45,15 +65,16 @@ internals.implementation = (server, options) => {
           return reply.serverError(error);
         }
 
-        if (result.isValid !== undefined && result.isValid === false) {
+        const { isValid, isExpired, credentials } = result;
+
+        if (!isValid) {
           return reply.unauthorized(new Error('Invalid access token'));
         }
 
-        if (result.isExpired !== undefined && result.isExpired) {
+        if (isExpired) {
           return reply.unauthorized(new Error('Token is expired'));
         }
 
-        const credentials = result.credentials;
         if (!credentials || typeof credentials !== 'object') {
           return reply.serverError(new Error('Bad token string received for Bearer auth validation'));
         }
