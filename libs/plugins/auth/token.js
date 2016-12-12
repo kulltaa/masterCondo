@@ -14,10 +14,10 @@ const TOKEN_TYPE = 'Bearer';
 const validateAccessToken = function validateAccessToken(token, callback) {
   const UserAccessTokenModel = this.getDb().getModel('UserAccessToken');
 
-  UserAccessTokenModel.findByToken(token)
-    .then((tokenRecord) => {
-      const result = UserAccessTokenModel.validate(tokenRecord);
-      const { isValid, isExpired } = result;
+  UserAccessTokenModel.findAndValidateToken(token)
+    .then((result) => {
+      const { data, validateResult } = result;
+      const { isValid, isExpired } = validateResult;
 
       if (!isValid) {
         callback(null, { isValid: false });
@@ -29,14 +29,20 @@ const validateAccessToken = function validateAccessToken(token, callback) {
         return Promise.resolve();
       }
 
+      const { tokenRecord } = data;
+      const user = tokenRecord.User;
+
       callback(null, {
         isValid: true,
         isExpired: false,
-        credentials: { user: tokenRecord.User } }
+        credentials: { user } }
       );
       return Promise.resolve();
     })
-    .catch(error => callback(error));
+    .catch((error) => {
+      callback(error);
+      return Promise.resolve();
+    });
 };
 
 const internals = {};
