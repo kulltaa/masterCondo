@@ -8,9 +8,6 @@ MYSQL_DBNAME="${MYSQL_DBNAME:-condo}"
 
 url="mysql://${MYSQL_USERNAME}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DBNAME}"
 
-echo "pass: $MYSQL_PASSWORD"
-echo "DB_URL: $url"
-
 up() {
   cd ..
   ./node_modules/.bin/sequelize db:migrate --url $url

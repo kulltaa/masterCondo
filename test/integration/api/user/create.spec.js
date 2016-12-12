@@ -1,5 +1,5 @@
 /* eslint-disable */
-require('dotenv').config();
+require('dotenv').config({ silent: true });
 
 // disable logging
 process.env.LOG_STDOUT = '';
