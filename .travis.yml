@@ -14,13 +14,13 @@ env:
   - MYSQL_PASSWORD=
   - MYSQL_DBNAME=master_condo
   - MYSQL_ENGINE=InnoDB
-  - MYSQL_CHARSET=utf8
+  - MYSQL_CHARSET=utf8mb4
   - MYSQL_COLLATE=utf8mb4_unicode_ci
   - ACCESS_TOKEN_LIFE_TIME=2592000
   - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
   - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
 before_install:
-  - mysql -e "CREATE DATABASE IF NOT EXISTS master_condo CHARACTER SET utf8 COLLATE utf8mb4_unicode_ci;"
+  - mysql -e "CREATE DATABASE IF NOT EXISTS master_condo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 install:
   - npm install
 before_script:
