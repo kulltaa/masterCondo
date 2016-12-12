@@ -4,25 +4,24 @@ node_js:
 services:
   - mysql
 env:
-  - NODE_ENV=test
-  - APP_NAME=MASTER_CONDO
-  - APP_PORT=3000
-  - BASE_URL=http://127.0.0.1:3000
-  - MYSQL_HOST=127.0.0.1
-  - MYSQL_PORT=3306
-  - MYSQL_USERNAME=root
-  - MYSQL_PASSWORD=
-  - MYSQL_DBNAME=master_condo
-  - MYSQL_ENGINE=InnoDB
-  - MYSQL_CHARSET=utf8mb4
-  - MYSQL_COLLATE=utf8mb4_unicode_ci
-  - ACCESS_TOKEN_LIFE_TIME=2592000
-  - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
-  - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
+  global:
+    - NODE_ENV=test
+    - APP_NAME=MASTER_CONDO
+    - APP_PORT=3000
+    - BASE_URL=http://127.0.0.1:3000
+    - MYSQL_HOST=127.0.0.1
+    - MYSQL_PORT=3306
+    - MYSQL_USERNAME=root
+    - MYSQL_PASSWORD=
+    - MYSQL_DBNAME=master_condo
+    - MYSQL_ENGINE=InnoDB
+    - MYSQL_CHARSET=utf8mb4
+    - MYSQL_COLLATE=utf8mb4_unicode_ci
+    - ACCESS_TOKEN_LIFE_TIME=2592000
+    - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
+    - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
 before_install:
   - mysql -e "CREATE DATABASE IF NOT EXISTS master_condo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-install:
-  - npm install
 before_script:
   - npm run lint
   - npm run db:migrate:up
