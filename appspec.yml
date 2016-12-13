@@ -7,8 +7,8 @@ permissions:
   - object: /home/ec2-user/api
     owner: ec2-user
     type:
-      - directory
       - file
+      - directory
 hooks:
   BeforeInstall:
     - location: scripts/deploy_hooks/before_install.sh

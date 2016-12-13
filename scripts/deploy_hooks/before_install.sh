@@ -1,10 +1,10 @@
 #!/bin/bash
 
-TMP_DIR="/tmp"
-CODE_DIR="/home/ec2-user/api/condo_admin"
+tmpdir="/tmp"
+codedir="/home/ec2-user/api/condo_admin"
 
-if [ ! -d $CODE_DIR ]; then
+if [ ! -d $codedir ]; then
   exit 0
 fi
 
-cp $CODE_DIR/.env $TMP_DIR/.env
+cp $codedir/.env $tmpdir/.env

@@ -1,17 +1,15 @@
 #!/bin/bash
 
-source /home/ec2-user/.bashrc
+. /home/ec2-user/.bashrc
 
-TMP_DIR="/tmp"
-CODE_DIR="/home/ec2-user/api/condo_admin"
-NPM="$(which npm)"
+tmpdir="/tmp"
+codedir="/home/ec2-user/api/condo_admin"
+npm="$(which npm)"
 
-echo $NPM
-
-if [ -f $TMP_DIR/.env ]; then
-  cp $TMP_DIR/.env $CODE_DIR/.env
+if [ -f $tmpdir/.env ]; then
+  cp $tmpdir/.env $codedir/.env
 else
-  cp $CODE_DIR/.env.example $CODE_DIR/.env
+  cp $codedir/.env.example $codedir/.env
 fi
 
-cd $CODE_DIR && $NPM install
+cd $codedir && $npm install
