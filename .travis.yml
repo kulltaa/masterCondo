@@ -41,5 +41,5 @@ deploy:
   revision_type: github
   wait-until-deployed: true
   on:
-    repo: kulltaa/test
+    repo: kulltaa/masterCondo
     branch: master
