@@ -4,7 +4,7 @@
 
 tmpdir="/tmp"
 codedir="/home/ec2-user/api/condo_admin"
-npm="$(which npm)"
+npm=$(which npm)
 
 if [ -f $tmpdir/.env ]; then
   cp $tmpdir/.env $codedir/.env

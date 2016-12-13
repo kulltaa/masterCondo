@@ -1,6 +1,6 @@
 #!/bin/bash
 
-supervisorctl="/usr/local/bin/supervisorctl"
+supervisorctl=$(which supervisorctl)
 API_PROCESS_NAME=condo_admin_api
 
 $supervisorctl restart $API_PROCESS_NAME:*
