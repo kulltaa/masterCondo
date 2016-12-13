@@ -16,6 +16,6 @@ hooks:
   AfterInstall:
     - location: scripts/deploy_hooks/after_install.sh
       runas: ec2-user
-  # ApplicationStart:
-  #   - location: scripts/deploy_hooks/application_start.sh
-  #     runas: ec2-user
+  ApplicationStart:
+    - location: scripts/deploy_hooks/application_start.sh
+      runas: ec2-user
