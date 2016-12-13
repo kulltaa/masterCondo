@@ -4,9 +4,10 @@ files:
   - source: /
     destination: /srv/www/condo_admin
 permissions:
-  - objects: /srv/www/condo_admin
+  - object: /srv/www/condo_admin
     owner: ec2-user
-    type: directory
+    type:
+      - directory
 hooks:
   BeforeInstall:
     - location: scripts/deploy_hooks/before_install.sh
