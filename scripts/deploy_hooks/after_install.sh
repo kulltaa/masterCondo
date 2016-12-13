@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TMP_DIR=/tmp
+TMP_DIR="/tmp"
 
-cp $TMP_DIR/.env .
+cp $TMP_DIR/.env ../../.env
 npm install
