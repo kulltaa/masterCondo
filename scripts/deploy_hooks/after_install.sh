@@ -1,9 +1,7 @@
 #!/bin/bash
 
 TMP_DIR="/tmp"
-CODE_DIR="/home/ec2-user/condo_admin"
-
-echo $whoami
+CODE_DIR="/srv/www/condo_admin"
 
 if [ -f $TMP_DIR/.env ]; then
   cp $TMP_DIR/.env $CODE_DIR/.env
