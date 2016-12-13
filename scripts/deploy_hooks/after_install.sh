@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /home/ec2-user/.bashrc
+
 TMP_DIR="/tmp"
 CODE_DIR="/home/ec2-user/api/condo_admin"
 NPM="$(which npm)"
