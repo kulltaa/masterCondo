@@ -2,9 +2,9 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /srv/www/condo_admin
+    destination: /home/ec2-user/condo_admin
 permissions:
-  - object: /srv/www/condo_admin
+  - object: /home/ec2-user/condo_admin
     owner: ec2-user
     type:
       - directory
