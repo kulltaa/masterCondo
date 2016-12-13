@@ -3,7 +3,7 @@
 TMP_DIR="/tmp"
 CODE_DIR="/home/ec2-user/condo_admin"
 
-echo $(whoami)
+sudo chown -R ec2-user: $CODE_DIR
 
 if [ -f $TMP_DIR/.env ]; then
   cp $TMP_DIR/.env $CODE_DIR/.env

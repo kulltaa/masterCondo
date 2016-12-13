@@ -3,11 +3,6 @@ os: linux
 files:
   - source: /
     destination: /home/ec2-user/condo_admin
-permissions:
-  - object: /home/ec2-user/condo_admin
-    owner: ec2-user
-    type:
-      - directory
 hooks:
   BeforeInstall:
     - location: scripts/deploy_hooks/before_install.sh
