@@ -3,10 +3,13 @@ os: linux
 files:
   - source: /
     destination: /srv/www/condo_admin
-# hooks:
-#   BeforeInstall:
-#     - location: scripts/deploy_hooks.sh before_install
-#   AfterInstall:
-#     - location: scripts/deploy_hooks.sh after_install
-#   ApplicationStart:
-#     - location: scripts/deploy_hooks.sh application_start
+hooks:
+  BeforeInstall:
+    - location: scripts/deploy_hooks.sh before_install
+      runas: ec2-user
+  AfterInstall:
+    - location: scripts/deploy_hooks.sh after_install
+      runas: ec2-user
+  ApplicationStart:
+    - location: scripts/deploy_hooks.sh application_start
+      runas: ec2-user
