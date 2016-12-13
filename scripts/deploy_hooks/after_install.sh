@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TMP_DIR="/tmp"
-CODE_DIR="/home/ec2-user/condo_admin"
+CODE_DIR="/home/ec2-user/api/condo_admin"
 
 sudo chown -R ec2-user: $CODE_DIR
 
