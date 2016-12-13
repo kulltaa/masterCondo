@@ -5,11 +5,11 @@ files:
     destination: /srv/www/condo_admin
 hooks:
   BeforeInstall:
-    - location: scripts/deploy_hooks.sh before_install
+    - location: scripts/deploy_hooks/before_install.sh
       runas: ec2-user
   AfterInstall:
-    - location: scripts/deploy_hooks.sh after_install
+    - location: scripts/deploy_hooks/after_install.sh
       runas: ec2-user
   ApplicationStart:
-    - location: scripts/deploy_hooks.sh application_start
+    - location: scripts/deploy_hooks/application_start.sh
       runas: ec2-user
