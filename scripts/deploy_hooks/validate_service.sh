@@ -1,6 +1,6 @@
 #!/bin/bash
 
-supervisorctl=$(which supervisorctl)
+supervisorctl="/usr/local/bin/supervisorctl"
 API_PROCESS_NAME=condo_admin_api
 
 count=$($supervisorctl status $API_PROCESS_NAME:* | grep -v RUNNING | grep -v grep)
