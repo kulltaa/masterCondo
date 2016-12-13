@@ -1,34 +1,34 @@
-language: node_js
-node_js:
-- '7'
-services:
-- mysql
-env:
-  global:
-  - NODE_ENV=test
-  - APP_NAME=MASTER_CONDO
-  - APP_PORT=3000
-  - BASE_URL=http://127.0.0.1:3000
-  - MYSQL_HOST=127.0.0.1
-  - MYSQL_PORT=3306
-  - MYSQL_USERNAME=root
-  - MYSQL_PASSWORD=
-  - MYSQL_DBNAME=condo_admin
-  - MYSQL_ENGINE=InnoDB
-  - MYSQL_CHARSET=utf8mb4
-  - MYSQL_COLLATE=utf8mb4_unicode_ci
-  - ACCESS_TOKEN_LIFE_TIME=2592000
-  - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
-  - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
-before_install:
-- mysql -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DBNAME CHARACTER SET $MYSQL_CHARSET COLLATE $MYSQL_COLLATE;"
-- npm run db:migrate:up
-script:
-- npm run lint
-- npm run test
-cache:
-  directories:
-  - node_modules
+# language: node_js
+# node_js:
+# - '7'
+# services:
+# - mysql
+# env:
+#   global:
+#   - NODE_ENV=test
+#   - APP_NAME=MASTER_CONDO
+#   - APP_PORT=3000
+#   - BASE_URL=http://127.0.0.1:3000
+#   - MYSQL_HOST=127.0.0.1
+#   - MYSQL_PORT=3306
+#   - MYSQL_USERNAME=root
+#   - MYSQL_PASSWORD=
+#   - MYSQL_DBNAME=condo_admin
+#   - MYSQL_ENGINE=InnoDB
+#   - MYSQL_CHARSET=utf8mb4
+#   - MYSQL_COLLATE=utf8mb4_unicode_ci
+#   - ACCESS_TOKEN_LIFE_TIME=2592000
+#   - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
+#   - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
+# before_install:
+# - mysql -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DBNAME CHARACTER SET $MYSQL_CHARSET COLLATE $MYSQL_COLLATE;"
+# - npm run db:migrate:up
+# script:
+# - npm run lint
+# - npm run test
+# cache:
+#   directories:
+#   - node_modules
 deploy:
   provider: codedeploy
   access_key_id: AKIAINXCQEZAAG4RKJQA
