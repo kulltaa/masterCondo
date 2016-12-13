@@ -2,4 +2,11 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /srv/www/api
+    destination: /srv/www/condo_admin
+hooks:
+  BeforeInstall:
+    - location: scripts/deploy_hooks.sh before_install
+  AfterInstall:
+    - location: scripts/deploy_hooks.sh after_install
+  # ApplicationStart:
+  #   - location: scripts/deploy_hooks.sh application_start

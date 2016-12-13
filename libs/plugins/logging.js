@@ -18,7 +18,6 @@ exports.register = function registerLogging(server, options, next) {
         args: [
           {
             log: '*',
-            request: '*',
             error: '*'
           }
         ]
