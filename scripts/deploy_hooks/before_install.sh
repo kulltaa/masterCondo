@@ -1,11 +1,10 @@
 #!/bin/bash
 
 TMP_DIR="/tmp"
+CODE_DIR="/srv/www/condo_admin"
 
-echo $PWD
-
-if [ ! -f ../../.env ]; then
-  cp ../../.env.example ../../.env
+if [ ! -f $CODE_DIR/.env ]; then
+  cp $CODE_DIR/.env.example $CODE_DIR/.env
 fi
 
-cp ../../.env $TMP_DIR/.env
+cp $CODE_DIR/.env $TMP_DIR/.env
