@@ -1,44 +1,45 @@
 language: node_js
 node_js:
-  - '7'
+- '7'
 services:
-  - mysql
+- mysql
 env:
   global:
-    - NODE_ENV=test
-    - APP_NAME=MASTER_CONDO
-    - APP_PORT=3000
-    - BASE_URL=http://127.0.0.1:3000
-    - MYSQL_HOST=127.0.0.1
-    - MYSQL_PORT=3306
-    - MYSQL_USERNAME=root
-    - MYSQL_PASSWORD=
-    - MYSQL_DBNAME=master_condo
-    - MYSQL_ENGINE=InnoDB
-    - MYSQL_CHARSET=utf8mb4
-    - MYSQL_COLLATE=utf8mb4_unicode_ci
-    - ACCESS_TOKEN_LIFE_TIME=2592000
-    - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
-    - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
+  - NODE_ENV=test
+  - APP_NAME=MASTER_CONDO
+  - APP_PORT=3000
+  - BASE_URL=http://127.0.0.1:3000
+  - MYSQL_HOST=127.0.0.1
+  - MYSQL_PORT=3306
+  - MYSQL_USERNAME=root
+  - MYSQL_PASSWORD=
+  - MYSQL_DBNAME=condo_admin
+  - MYSQL_ENGINE=InnoDB
+  - MYSQL_CHARSET=utf8mb4
+  - MYSQL_COLLATE=utf8mb4_unicode_ci
+  - ACCESS_TOKEN_LIFE_TIME=2592000
+  - EMAIL_VERIFICATION_TOKEN_LIFE_TIME=259200
+  - EMAIL_RECOVERY_TOKEN_LIFE_TIME=259200
 before_install:
-  - mysql -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DBNAME CHARACTER SET $MYSQL_CHARSET COLLATE $MYSQL_COLLATE;"
-  - npm run db:migrate:up
-before_script:
-  - npm run lint
+- mysql -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DBNAME CHARACTER SET $MYSQL_CHARSET
+  COLLATE $MYSQL_COLLATE;"
+- npm run db:migrate:up
+script:
+- npm run lint
+- npm run test
 cache:
   directories:
   - node_modules
-
-# deploy:
-  # provider: codedeploy
-  # access_key_id: AKIAID7R52A5ZJCSIUOQ
-  # secret_access_key:
-  #   secure: mnsukQzy5Aj4oejb10H747oV+07xrceb8a0RSmuKVjpS4k3yZVZRXepQAJKVFjRTeTxDC7xLuuhsaUZx8ZrRwxY83f7XQ8XDfSQoG+5Evek/HQB7yMTg6kd7bSxTj3O7ASW106OljkgqOyeQ1qJcZ0PWv9839foU0Lj7EwfBhOXGQM3XJOkgTyAsFg+CFbE5epZilOhYvEVmRZCikFE9w79gecRAluo/p6QcEHvW9GPWkpAkvSgpmnDlPtSksOy3GMntq4bBVsSotHJomeaspc9vJ/WLf2uLqqL8UIRpsV1pd9rcNWLxr3d+deqZBq0Y4P5tKhpRYHUz6Pk1GkVMDQ+FHW7Fza/TdcKIuX1BR/d/jGh4eErnRKUWQJ4EJyCRafqS5uK1yiBFDOR65shdM0kBSGC8nVTiTWLCuADwl4JSzpVAvdQqcytTiTh5UbWcS+svaxOHOHrDTINTT/3kp8FXzyFz+ZMMIM73JIRntfs32OMLNKeodXOjNrabwcsQhYix5VnV0m5HreXai1Gdg3zZ0t7F4s8v98l0VxP3rhEqermQLKPjxJhY9Su3caRnAznkPIhyRaBZGkuakfckJfh1ZBJh/jYiAI959pssoUO4fU/uv6eLns/7J6w2h/N3gNjt7XMbXzQNt9ZK8epL4VKoZbe+GnwJYTjM4Vrxmcw=
-  # region: us-west-2
-  # application: TestCodeDeployApplicationName
-  # deployment_group: TestCodeDeployDeploymentGroupName
-  # revision_type: github
-  # wait-until-deployed: true
-  # on:
-  #   repo: kulltaa/test
-  #   branch: master
+deploy:
+  provider: codedeploy
+  access_key_id: AKIAINXCQEZAAG4RKJQA
+  secret_access_key:
+    secure: gkIL6jdI+jqMDDRW9YsKgQZxvLs4MT9IKegWWkpvvTfIMPiU9fFjUZNtUQ0FjBP8uzvgrPXvKpywMxbCYGeG/d3rogCtRBJEaFIQWR56XrLRGozb/c5bmlxXqGA9RjVfqpEQkb8HNnjbDIvzGcJiXV7KIxFIJ7weZZnbd6Qn+noN+XWGNRPGEZv6cLyUsG/5F5fsvor47ILMFfP1a0zL2euXHQmq2JUHPWG3ACc3CRHFUVXKWGYctSze6nYqNLCv/A2p6HKqtj5b7LZKXW02WAEF2CsE6wtxVYaiXUBZrwRXjztF/RYV5Cb9YqaMiLplknfFS50PhzIMoLU+lVh1fU1pFkqn8Ec79IEGaSd6UM1W9THi3bNi/qh1PgusHxWd2AhlluixmCv5PUxLVeS9gTzHsuuJEdiTxm9TKCE3EFLJLGDu1WUrA+jpU7y3BzZAcuG+jxQwl/NveClE7ENiBIQEaY4awCOCAjy4GqzcpCqbpDRMDKGMHcoIjtc6e/40Vw2lC8DTho1Gs77czBne9K0Uw4hydJ9iTLLJZ1KCvFyyeeoH0ncUEo/lukcqHgOJbrDQTElUDYqYaU5jhoMru4/fPYxPEzAUCztQqvvuJjzzTBFZol9PMfwTlH+XHuQsAS/lgFaKxxDGaW5h9myKJRDQxU4TYpS7NejHJ+NEnj4=
+  region: us-west-2
+  application: CondoDeployment
+  deployment_group: CondoAdmin-API-Deployment
+  revision_type: github
+  wait-until-deployed: true
+  on:
+    repo: kulltaa/test
+    branch: master
