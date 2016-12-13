@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /srv/www/condo_admin
+    destination: /home/ec2-user/condo_admin
 hooks:
   BeforeInstall:
     - location: scripts/deploy_hooks/before_install.sh
